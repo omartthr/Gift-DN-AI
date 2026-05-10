@@ -1,0 +1,113 @@
+{
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Bir hata oluştu. Lütfen tekrar deneyin.",
+    "retry": "Tekrar Dene",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "close": "Kapat",
+    "add": "Ekle",
+    "remove": "Kaldır",
+    "share": "Paylaş",
+    "like": "Beğen",
+    "liked": "Beğenildi",
+    "anonymous": "Anonim"
+  },
+  "nav": {
+    "home": "Ana Sayfa",
+    "quiz": "Hediye Bul",
+    "community": "Topluluk",
+    "wishlist": "İstek Listesi",
+    "profile": "Profil",
+    "login": "Giriş Yap",
+    "logout": "Çıkış Yap"
+  },
+  "home": {
+    "title": "Mükemmel Hediyeyi Bul",
+    "subtitle": "Yapay zeka destekli hediye önerisiyle doğru kişiye doğru hediyeyi seç",
+    "cta": "Hemen Başla",
+    "features": {
+      "ai": "Akıllı AI Anketi",
+      "ai_desc": "Kişiselleştirilmiş sorularla hediye alınacak kişiyi tanıyoruz",
+      "real": "Gerçek Ürünler",
+      "real_desc": "Google Shopping'den anlık fiyat ve ürün bilgileri",
+      "community": "Topluluk Deneyimleri",
+      "community_desc": "Başkalarının hediye deneyimlerinden ilham al"
+    }
+  },
+  "quiz": {
+    "title": "Hediye Kaşifi",
+    "subtitle": "Kim için hediye arıyorsun?",
+    "recipient_label": "Hediye Alınacak Kişi (Çoklu seçim)",
+    "budget_label": "Bütçe",
+    "start": "Ankete Başla",
+    "question_counter": "Soru {{current}} / maks. {{max}}",
+    "thinking": "AI düşünüyor...",
+    "analyzing": "Hediyeler aranıyor...",
+    "your_answer": "Cevabınızı yazın...",
+    "next": "Devam Et",
+    "recipients": {
+      "sevgili": "Sevgili",
+      "anne": "Anne",
+      "baba": "Baba",
+      "arkadas": "Arkadaş",
+      "kardes": "Kardeş",
+      "is_arkadasi": "İş Arkadaşı",
+      "cocuk": "Çocuk",
+      "diger": "Diğer"
+    },
+    "budgets": {
+      "0_250": "0 – 250 ₺",
+      "250_500": "250 – 500 ₺",
+      "500_1000": "500 – 1.000 ₺",
+      "1000_3000": "1.000 – 3.000 ₺",
+      "3000_plus": "3.000+ ₺"
+    }
+  },
+  "results": {
+    "title": "İşte Önerilen Hediyeler!",
+    "subtitle": "AI sana özel {{count}} hediye seçti",
+    "view_product": "Ürünü Görüntüle",
+    "add_wishlist": "İstek Listesine Ekle",
+    "share_community": "Toplulukla Paylaş",
+    "added_wishlist": "İstek listesine eklendi!",
+    "rank": "{{rank}}. Öneri",
+    "why": "Neden bu hediye?",
+    "price": "Fiyat",
+    "store": "Mağaza"
+  },
+  "community": {
+    "title": "Topluluk Akışı",
+    "subtitle": "Gerçek kullanıcı deneyimlerinden ilham al",
+    "filter_all": "Tümü",
+    "sort_newest": "En Yeni",
+    "sort_popular": "En Popüler",
+    "for_label": "için",
+    "add_wishlist": "İstek Listesine Ekle",
+    "share_modal_title": "Deneyimini Paylaş",
+    "feedback_placeholder": "Bu hediye nasıldı? Deneyimini anlat...",
+    "recipient_placeholder": "Kim için? (ör. Annem için)",
+    "share_anon": "Anonim paylaş",
+    "share_submit": "Paylaş"
+  },
+  "wishlist": {
+    "title": "İstek Listesi",
+    "empty": "Henüz bir şey eklemedin.",
+    "empty_cta": "Topluluk Akışını Keşfet",
+    "note_placeholder": "Not ekle...",
+    "view_product": "Ürüne Git",
+    "remove": "Listeden Kaldır"
+  },
+  "auth": {
+    "login_title": "Hoş Geldin",
+    "register_title": "Hesap Oluştur",
+    "email": "E-posta",
+    "password": "Şifre",
+    "name": "Ad Soyad",
+    "login": "Giriş Yap",
+    "register": "Kayıt Ol",
+    "google": "Google ile Devam Et",
+    "no_account": "Hesabın yok mu? Kayıt ol",
+    "has_account": "Zaten hesabın var mı? Giriş yap"
+  }
+}

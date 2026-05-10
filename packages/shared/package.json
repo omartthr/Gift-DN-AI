@@ -1,0 +1,11 @@
+{
+  "name": "@gift-dnai/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "zustand": "^4.5.0",
+    "i18next": "^23.7.0"
+  }
+}

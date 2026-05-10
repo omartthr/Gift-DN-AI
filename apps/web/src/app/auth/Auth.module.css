@@ -1,0 +1,10 @@
+.page { min-height: calc(100vh - 65px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.card { width: 100%; max-width: 440px; padding: 48px 36px; display: flex; flex-direction: column; gap: 20px; }
+.logo { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.8rem; font-weight: 800; }
+.title { text-align: center; font-size: 1.4rem; font-weight: 700; }
+.googleBtn { width: 100%; justify-content: center; gap: 10px; }
+.divider { display: flex; align-items: center; gap: 16px; color: var(--color-text-faint); font-size: 0.8rem; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--color-border); }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.error { color: var(--color-primary); font-size: 0.85rem; text-align: center; }
+.toggle { background: none; border: none; color: var(--color-primary); cursor: pointer; font-size: 0.875rem; text-align: center; text-decoration: underline; font-family: inherit; }

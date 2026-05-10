@@ -1,0 +1,113 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong. Please try again.",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "add": "Add",
+    "remove": "Remove",
+    "share": "Share",
+    "like": "Like",
+    "liked": "Liked",
+    "anonymous": "Anonymous"
+  },
+  "nav": {
+    "home": "Home",
+    "quiz": "Find a Gift",
+    "community": "Community",
+    "wishlist": "Wishlist",
+    "profile": "Profile",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "home": {
+    "title": "Find the Perfect Gift",
+    "subtitle": "AI-powered gift suggestions to find the right gift for the right person",
+    "cta": "Get Started",
+    "features": {
+      "ai": "Smart AI Quiz",
+      "ai_desc": "We get to know the recipient through personalized questions",
+      "real": "Real Products",
+      "real_desc": "Live prices and product info from Google Shopping",
+      "community": "Community Experiences",
+      "community_desc": "Get inspired by others' gift experiences"
+    }
+  },
+  "quiz": {
+    "title": "Gift Explorer",
+    "subtitle": "Who are you shopping for?",
+    "recipient_label": "Gift Recipient (Multiple choice)",
+    "budget_label": "Budget",
+    "start": "Start Quiz",
+    "question_counter": "Question {{current}} / max {{max}}",
+    "thinking": "AI is thinking...",
+    "analyzing": "Finding gifts...",
+    "your_answer": "Type your answer...",
+    "next": "Continue",
+    "recipients": {
+      "sevgili": "Partner",
+      "anne": "Mom",
+      "baba": "Dad",
+      "arkadas": "Friend",
+      "kardes": "Sibling",
+      "is_arkadasi": "Colleague",
+      "cocuk": "Child",
+      "diger": "Other"
+    },
+    "budgets": {
+      "0_250": "0 – 250 ₺",
+      "250_500": "250 – 500 ₺",
+      "500_1000": "500 – 1,000 ₺",
+      "1000_3000": "1,000 – 3,000 ₺",
+      "3000_plus": "3,000+ ₺"
+    }
+  },
+  "results": {
+    "title": "Here Are Your Gift Suggestions!",
+    "subtitle": "AI picked {{count}} gifts just for you",
+    "view_product": "View Product",
+    "add_wishlist": "Add to Wishlist",
+    "share_community": "Share with Community",
+    "added_wishlist": "Added to wishlist!",
+    "rank": "Suggestion #{{rank}}",
+    "why": "Why this gift?",
+    "price": "Price",
+    "store": "Store"
+  },
+  "community": {
+    "title": "Community Feed",
+    "subtitle": "Get inspired by real user experiences",
+    "filter_all": "All",
+    "sort_newest": "Newest",
+    "sort_popular": "Most Popular",
+    "for_label": "for",
+    "add_wishlist": "Add to Wishlist",
+    "share_modal_title": "Share Your Experience",
+    "feedback_placeholder": "How was this gift? Tell us your experience...",
+    "recipient_placeholder": "For whom? (e.g. For my mom)",
+    "share_anon": "Share anonymously",
+    "share_submit": "Share"
+  },
+  "wishlist": {
+    "title": "Wishlist",
+    "empty": "You haven't added anything yet.",
+    "empty_cta": "Explore Community Feed",
+    "note_placeholder": "Add a note...",
+    "view_product": "Go to Product",
+    "remove": "Remove from List"
+  },
+  "auth": {
+    "login_title": "Welcome Back",
+    "register_title": "Create Account",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full Name",
+    "login": "Login",
+    "register": "Sign Up",
+    "google": "Continue with Google",
+    "no_account": "Don't have an account? Sign up",
+    "has_account": "Already have an account? Login"
+  }
+}
