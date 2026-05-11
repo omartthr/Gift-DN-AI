@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useI18n } from "@/store/i18nStore";
 import { useAuthStore } from "@/store/authStore";
+import GradientText from "@/components/GradientText";
 import ChatPanel from "./ChatPanel";
 
 function Icon({ name }: { name: string }) {
@@ -22,11 +23,15 @@ function Icon({ name }: { name: string }) {
 interface AppShellProps { children: React.ReactNode; }
 
 export default function AppShell({ children }: AppShellProps) {
-  const { t, lang, setLang } = useI18n();
+  const { t, lang, setLang, initLang } = useI18n();
   const { user, signOut } = useAuthStore();
   const pathname = usePathname();
   const [hover, setHover] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup" | false>(false);
+
+  useEffect(() => {
+    initLang();
+  }, [initLang]);
 
   const isHome = pathname === "/";
 
@@ -52,7 +57,7 @@ export default function AppShell({ children }: AppShellProps) {
       >
         <Link href="/" className="lr-brand" style={{ textDecoration: "none", color: "inherit" }}>
           <div className="lr-brand-glyph">G</div>
-          <div className="lr-brand-text">Gift<span className="dnai">DN-AI</span></div>
+          <div className="lr-brand-text">Gift<GradientText className="dnai" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>DN-AI</GradientText></div>
         </Link>
 
         <div className="lr-items">
@@ -85,10 +90,10 @@ export default function AppShell({ children }: AppShellProps) {
                   <path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M21 4v16"/>
                 </svg>
               </span>
-              <span className="lr-label" style={{ display: "flex", gap: "6px" }}>
+              <span className="lr-label" style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                 <span onClick={() => setAuthMode("signin")} style={{ cursor: "pointer" }}>{lang === "tr" ? "Giriş Yap" : "Sign in"}</span>
                 <span style={{ opacity: 0.5 }}>·</span>
-                <span onClick={() => setAuthMode("signup")} style={{ color: "var(--coral)", cursor: "pointer" }}>{lang === "tr" ? "Kayıt Ol" : "Sign up"}</span>
+                <GradientText onClick={() => setAuthMode("signup")} animationSpeed={3} style={{ cursor: "pointer" }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{lang === "tr" ? "Kayıt Ol" : "Sign up"}</GradientText>
               </span>
             </div>
           )}
@@ -154,7 +159,7 @@ function AuthModalInline({ initialMode, onClose }: { initialMode: "signin" | "si
           <div className="eyebrow">GIFT · DN-AI</div>
           <h2 className="serif" style={{ fontSize: 44, lineHeight: 1.05, letterSpacing: "-0.02em" }}>
             {isSignUp ? (lang === "tr" ? "Hesap Oluştur" : "Create Account") : t.auth.title_a}<br />
-            {!isSignUp && <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.auth.title_b}</span>}
+            {!isSignUp && <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.auth.title_b}</GradientText>}
           </h2>
           <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>
             {isSignUp 
@@ -180,11 +185,11 @@ function AuthModalInline({ initialMode, onClose }: { initialMode: "signin" | "si
             </div>
             <button className="btn btn-bone btn-lg" onClick={handleAuth} style={{ width: "100%", justifyContent: "center" }}>G  {t.auth.google}</button>
           </div>
-          <div className="row gap-8" style={{ marginTop: 8, fontSize: 13, color: "var(--muted)" }}>
+          <div className="row gap-8 items-center" style={{ marginTop: 8, fontSize: 13, color: "var(--muted)" }}>
             <span>{isSignUp ? (lang === "tr" ? "Zaten hesabın var mı?" : "Already have an account?") : t.auth.noaccount}</span>
-            <span onClick={() => setIsSignUp(!isSignUp)} style={{ color: "var(--coral)", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>
+            <GradientText onClick={() => setIsSignUp(!isSignUp)} animationSpeed={3} style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>
               {isSignUp ? (lang === "tr" ? "Giriş Yap" : "Sign In") : t.auth.signup}
-            </span>
+            </GradientText>
           </div>
         </div>
       </div>

@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import { useI18n } from "@/store/i18nStore";
 import { COMMUNITY_FEED, TONE_BG, type CommunityPost } from "@/lib/data";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
+import TiltedCard from "@/components/TiltedCard";
+import GradientText from "@/components/GradientText";
 
 type WishlistItem = { name: string; store: string; tone: string; price: string; desc: string; note: string };
 
@@ -50,7 +52,7 @@ export default function CommunityClient() {
             <div className="eyebrow">{t.community.eyebrow}</div>
             <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
               {t.community.title_a}<br />
-              <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.community.title_b}</span>
+              <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.community.title_b}</GradientText>
             </h1>
             <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.community.sub}</p>
           </div>
@@ -85,32 +87,36 @@ export default function CommunityClient() {
               const totalLikes = p.likes + (liked ? 1 : 0);
               const saved = wishlist.some(w => w.name === p.productName);
               return (
-                <div key={p.id} className="card fade-up" style={{ display: "inline-block", width: "100%", marginBottom: 20, breakInside: "avoid", animationDelay: `${(i % 6) * 0.06}s` }}>
-                  <ImagePlaceholder tone={p.tone} label={p.productName.toUpperCase()} h={p.h} />
-                  <div className="col gap-12" style={{ padding: "16px 18px 18px" }}>
-                    <div className="row gap-8 items-center wrap">
-                      <span className="tag tag-rose">{lang === "tr" ? p.forTr : p.forEn}</span>
-                      <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>· {p.store.toUpperCase()}</span>
-                    </div>
-                    <p className="serif-italic" style={{ fontSize: 18, lineHeight: 1.35, color: "var(--ink)", margin: 0 }}>"{lang === "tr" ? p.textTr : p.textEn}"</p>
-                    <hr className="rule-soft" />
-                    <div className="row justify-between items-center">
-                      <div className="row gap-8 items-center">
-                        <span style={{ width: 24, height: 24, borderRadius: "50%", background: p.anon ? "var(--muted-2)" : "var(--ink)", color: "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontFamily: "JetBrains Mono" }}>
-                          {p.anon ? "·" : p.author[0]}
-                        </span>
-                        <span style={{ fontSize: 13, color: "var(--ink-2)" }}>{p.anon ? t.community.anon : p.author}</span>
+                <div key={p.id} className="fade-up" style={{ display: "inline-block", width: "100%", marginBottom: 20, breakInside: "avoid", animationDelay: `${(i % 6) * 0.06}s` }}>
+                  <TiltedCard scaleOnHover={1.02} rotateAmplitude={8}>
+                    <div className="card" style={{ width: "100%", height: "100%" }}>
+                      <ImagePlaceholder tone={p.tone} label={p.productName.toUpperCase()} h={p.h} />
+                      <div className="col gap-12" style={{ padding: "16px 18px 18px" }}>
+                        <div className="row gap-8 items-center wrap">
+                          <span className="tag tag-rose">{lang === "tr" ? p.forTr : p.forEn}</span>
+                          <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>· {p.store.toUpperCase()}</span>
+                        </div>
+                        <p className="serif-italic" style={{ fontSize: 18, lineHeight: 1.35, color: "var(--ink)", margin: 0 }}>"{lang === "tr" ? p.textTr : p.textEn}"</p>
+                        <hr className="rule-soft" />
+                        <div className="row justify-between items-center">
+                          <div className="row gap-8 items-center">
+                            <span style={{ width: 24, height: 24, borderRadius: "50%", background: p.anon ? "var(--muted-2)" : "var(--ink)", color: "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontFamily: "JetBrains Mono" }}>
+                              {p.anon ? "·" : p.author[0]}
+                            </span>
+                            <span style={{ fontSize: 13, color: "var(--ink-2)" }}>{p.anon ? t.community.anon : p.author}</span>
+                          </div>
+                          <div className="row gap-4 items-center">
+                            <button onClick={() => toggleLike(p.id)} className="btn btn-ghost btn-sm" style={{ padding: "6px 10px", border: "none", color: liked ? "var(--coral)" : "var(--muted)" }}>
+                              {liked ? "♥" : "♡"} <span className="mono" style={{ fontSize: 11 }}>{totalLikes}</span>
+                            </button>
+                            <button onClick={() => addToWishlist(p)} className="btn btn-ghost btn-sm" style={{ padding: "6px 10px", border: "none", color: saved ? "var(--sage)" : "var(--muted)" }}>
+                              {saved ? "✓" : "+"} <span style={{ fontSize: 11 }}>{saved ? t.community.saved : t.community.add_wish}</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="row gap-4 items-center">
-                        <button onClick={() => toggleLike(p.id)} className="btn btn-ghost btn-sm" style={{ padding: "6px 10px", border: "none", color: liked ? "var(--coral)" : "var(--muted)" }}>
-                          {liked ? "♥" : "♡"} <span className="mono" style={{ fontSize: 11 }}>{totalLikes}</span>
-                        </button>
-                        <button onClick={() => addToWishlist(p)} className="btn btn-ghost btn-sm" style={{ padding: "6px 10px", border: "none", color: saved ? "var(--sage)" : "var(--muted)" }}>
-                          {saved ? "✓" : "+"} <span style={{ fontSize: 11 }}>{saved ? t.community.saved : t.community.add_wish}</span>
-                        </button>
-                      </div>
                     </div>
-                  </div>
+                  </TiltedCard>
                 </div>
               );
             })}

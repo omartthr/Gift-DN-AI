@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useI18n } from "@/store/i18nStore";
 import { TONE_BG, COMMUNITY_FEED } from "@/lib/data";
+import Carousel from "@/components/Carousel";
+import TiltedCard from "@/components/TiltedCard";
+import GradientText from "@/components/GradientText";
 
 function ImagePlaceholder({ tone = "sage", label, h = 240, style = {} }: { tone?: string; label?: string; h?: number; style?: React.CSSProperties }) {
   return (
@@ -23,6 +26,20 @@ export default function HomeClient() {
 
   const featuredPosts = COMMUNITY_FEED.slice(0, 3);
 
+  const carouselItems = sampleGifts.map((g, i) => ({
+    id: i,
+    render: () => (
+      <>
+        <ImagePlaceholder tone={g.tone} label={g.name.toUpperCase()} h={170} />
+        <div className="col gap-4" style={{ padding: "14px 14px 16px" }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", textTransform: "uppercase" }}>{g.store} · 0{i + 1}/3</div>
+          <div className="serif" style={{ fontSize: 18, lineHeight: 1.2 }}>{g.name}</div>
+          <div className="mono" style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 4 }}>{g.price}</div>
+        </div>
+      </>
+    )
+  }));
+
   return (
     <div className="fade-in">
       <div className="shell" style={{ paddingTop: 48, paddingBottom: 56 }}>
@@ -36,13 +53,13 @@ export default function HomeClient() {
           </div>
 
           <h1 className="serif" style={{ fontSize: "clamp(48px, 6.2vw, 92px)", lineHeight: 1.04, letterSpacing: "-0.02em", maxWidth: 820 }}>
-            {t.landing.h1_a} <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.landing.h1_b}</span> {t.landing.h1_c}
+            {t.landing.h1_a} <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.landing.h1_b}</GradientText> {t.landing.h1_c}
           </h1>
 
           <p style={{ fontSize: 17, lineHeight: 1.55, color: "var(--ink-2)", maxWidth: 580, marginTop: 24 }}>{t.landing.sub}</p>
 
           <div className="row gap-12 items-center wrap" style={{ marginTop: 28 }}>
-            <span className="mono" style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--coral)" }}>→</span>
+            <GradientText className="mono" animationSpeed={3} style={{ fontSize: 11, letterSpacing: "0.1em" }} colors={["#F95738", "#FF9F1C", "#F95738"]}>→</GradientText>
             <span style={{ fontSize: 14, color: "var(--ink-2)" }}>
               {lang === "tr" ? "Sağdaki sohbet kutusundan başla." : "Start in the chat box on the right."}
             </span>
@@ -68,7 +85,7 @@ export default function HomeClient() {
             ].map((s, i) => (
               <div key={i} className="col gap-12" style={{ flex: "1 1 220px" }}>
                 <div className="row items-baseline gap-12">
-                  <span className="serif" style={{ fontSize: 36, color: "var(--coral)" }}>{s.n}</span>
+                  <GradientText className="serif" animationSpeed={3} style={{ fontSize: 36 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{s.n}</GradientText>
                   <span className="eyebrow">{s.eye}</span>
                 </div>
                 <div className="serif" style={{ fontSize: 24, lineHeight: 1.15, letterSpacing: "-0.01em" }}>{s.body}</div>
@@ -87,8 +104,8 @@ export default function HomeClient() {
               <div className="eyebrow">{lang === "tr" ? "ÖRNEK SONUÇ" : "SAMPLE RESULT"}</div>
               <h2 className="serif" style={{ fontSize: 36, lineHeight: 1.1, letterSpacing: "-0.01em" }}>
                 {lang === "tr"
-                  ? <>{`Üç hediye, `}<span className="serif-italic" style={{ color: "var(--coral)" }}>gerçek mağazalardan.</span></>
-                  : <>{`Three gifts, `}<span className="serif-italic" style={{ color: "var(--coral)" }}>from real shops.</span></>}
+                  ? <>{`Üç hediye, `}<GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>gerçek mağazalardan.</GradientText></>
+                  : <>{`Three gifts, `}<GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>from real shops.</GradientText></>}
               </h2>
               <p style={{ fontSize: 15, color: "var(--ink-2)", lineHeight: 1.55, maxWidth: 460 }}>
                 {lang === "tr"
@@ -96,17 +113,8 @@ export default function HomeClient() {
                   : "Each suggestion comes with AI reasoning, a real price, and a real shop link. No fatigue."}
               </p>
             </div>
-            <div className="row gap-12 wrap" style={{ flex: "2 1 360px" }}>
-              {sampleGifts.map((g, i) => (
-                <div key={i} className="card" style={{ flex: 1, minWidth: 160 }}>
-                  <ImagePlaceholder tone={g.tone} label={g.name.toUpperCase()} h={170} />
-                  <div className="col gap-4" style={{ padding: "14px 14px 16px" }}>
-                    <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", textTransform: "uppercase" }}>{g.store} · 0{i + 1}/3</div>
-                    <div className="serif" style={{ fontSize: 18, lineHeight: 1.2 }}>{g.name}</div>
-                    <div className="mono" style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 4 }}>{g.price}</div>
-                  </div>
-                </div>
-              ))}
+            <div style={{ flex: "2 1 360px", display: "flex", justifyContent: "flex-end" }}>
+              <Carousel items={carouselItems} baseWidth={400} autoplay={true} autoplayDelay={3000} loop={true} />
             </div>
           </div>
         </section>
@@ -130,18 +138,20 @@ export default function HomeClient() {
               </div>
               <div className="col gap-8">
                 {featuredPosts.map((c, i) => (
-                  <div key={i} className="row gap-12 items-center" style={{ padding: "10px 12px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6 }}>
-                    <div style={{ width: 48, height: 48, flexShrink: 0, background: TONE_BG[c.tone], borderRadius: 4 }}></div>
-                    <div className="col gap-2" style={{ flex: 1, minWidth: 0 }}>
-                      <div className="row gap-8 items-baseline">
-                        <span className="tag tag-rose" style={{ fontSize: 9, padding: "2px 7px" }}>{lang === "tr" ? c.forTr : c.forEn}</span>
-                        <span className="mono" style={{ fontSize: 9, letterSpacing: "0.08em", color: "var(--muted)" }}>{c.store.toUpperCase()}</span>
+                  <TiltedCard key={i} scaleOnHover={1.02} rotateAmplitude={6}>
+                    <div className="row gap-12 items-center" style={{ padding: "10px 12px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6, height: "100%" }}>
+                      <div style={{ width: 48, height: 48, flexShrink: 0, background: TONE_BG[c.tone], borderRadius: 4 }}></div>
+                      <div className="col gap-2" style={{ flex: 1, minWidth: 0 }}>
+                        <div className="row gap-8 items-baseline">
+                          <span className="tag tag-rose" style={{ fontSize: 9, padding: "2px 7px" }}>{lang === "tr" ? c.forTr : c.forEn}</span>
+                          <span className="mono" style={{ fontSize: 9, letterSpacing: "0.08em", color: "var(--muted)" }}>{c.store.toUpperCase()}</span>
+                        </div>
+                        <span className="serif-italic" style={{ fontSize: 14, color: "var(--ink)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          "{lang === "tr" ? c.textTr : c.textEn}"
+                        </span>
                       </div>
-                      <span className="serif-italic" style={{ fontSize: 14, color: "var(--ink)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        "{lang === "tr" ? c.textTr : c.textEn}"
-                      </span>
                     </div>
-                  </div>
+                  </TiltedCard>
                 ))}
               </div>
             </div>

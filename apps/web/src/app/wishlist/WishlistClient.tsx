@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
 import { TONE_BG } from "@/lib/data";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
+import GradientText from "@/components/GradientText";
 
 type WishlistItem = { name: string; store: string; tone: string; price: string; desc: string; note: string };
 
@@ -28,7 +29,7 @@ export default function WishlistClient() {
               <div className="eyebrow">{t.wishlist.eyebrow}</div>
               <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
                 {t.wishlist.title_a}<br />
-                <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.wishlist.title_b}</span>
+                <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.wishlist.title_b}</GradientText>
               </h1>
             </div>
             {!empty && (

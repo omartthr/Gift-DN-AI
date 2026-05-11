@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
 import { QUIZ_BANK, type QuizQuestion } from "@/lib/data";
+import GradientText from "@/components/GradientText";
 
 export default function QuizClient() {
   const { t, lang } = useI18n();
@@ -82,7 +83,7 @@ export default function QuizClient() {
         <div className="col gap-24 items-center text-center" style={{ maxWidth: 560, padding: "0 24px" }}>
           <div className="eyebrow">{t.quiz.eyebrow}</div>
           <h1 className="serif" style={{ fontSize: "clamp(40px, 5vw, 64px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
-            <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.quiz.finalizing}</span>
+            <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.quiz.finalizing}</GradientText>
           </h1>
           <div className="row gap-12 items-center">
             <span className="dots"><span></span><span></span><span></span></span>
@@ -112,7 +113,7 @@ export default function QuizClient() {
                 <div className="eyebrow">{t.onboarding.eyebrow}</div>
                 <h1 className="serif" style={{ fontSize: "clamp(48px, 6.5vw, 88px)", lineHeight: 1.08, letterSpacing: "-0.02em" }}>
                   {t.onboarding.title_a}<br />
-                  <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.onboarding.title_b}</span>
+                  <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.onboarding.title_b}</GradientText>
                 </h1>
                 <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.onboarding.sub}</p>
 
@@ -204,7 +205,7 @@ export default function QuizClient() {
             <div className="row gap-16 items-center">
               <div className="col" style={{ alignItems: "flex-end" }}>
                 <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.quiz.confidence}</span>
-                <span className="serif" style={{ fontSize: 18, color: "var(--coral)" }}>{confidence.toFixed(2)}</span>
+                <GradientText className="serif" animationSpeed={3} style={{ fontSize: 18 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{confidence.toFixed(2)}</GradientText>
               </div>
               <button className="btn btn-ghost btn-sm" onClick={() => setPhase("onboarding")}>← {t.onboarding.back}</button>
             </div>
@@ -218,7 +219,7 @@ export default function QuizClient() {
           {/* Main question column */}
           <div className="col gap-32" style={{ flex: "1.6" }}>
             <div className="row items-baseline gap-12">
-              <span className="serif" style={{ fontSize: 56, color: "var(--coral)" }}>{String(turn + 1).padStart(2, "0")}</span>
+              <GradientText className="serif" animationSpeed={3} style={{ fontSize: 56 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{String(turn + 1).padStart(2, "0")}</GradientText>
               <span className="eyebrow">{t.quiz.ai_question}</span>
             </div>
             <h1 key={turn} className="serif fade-up" style={{ fontSize: "clamp(40px, 5.5vw, 72px)", lineHeight: 1.05, letterSpacing: "-0.02em", maxWidth: 920 }}>
@@ -296,7 +297,7 @@ export default function QuizClient() {
                     <div key={i} className="col gap-4">
                       <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>Q{history.length - 2 + i}</span>
                       <span style={{ fontSize: 13, color: "var(--ink-2)" }}>{h.q.length > 52 ? h.q.slice(0, 52) + "…" : h.q}</span>
-                      <span className="serif-italic" style={{ fontSize: 14, color: "var(--coral)" }}>"{h.a.length > 40 ? h.a.slice(0, 40) + "…" : h.a}"</span>
+                      <GradientText className="serif-italic" animationSpeed={3} style={{ fontSize: 14 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>"{h.a.length > 40 ? h.a.slice(0, 40) + "…" : h.a}"</GradientText>
                     </div>
                   ))}
                 </div>
