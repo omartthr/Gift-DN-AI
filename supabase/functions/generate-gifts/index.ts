@@ -3,26 +3,64 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import OpenAI from "https://esm.sh/openai@4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function callOpenAI(prompt: string): Promise<string> {
+  const apiKey = Deno.env.get("OPENAI_API_KEY")!;
+  const url = "https://api.openai.com/v1/chat/completions";
+
+  const body = {
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+    temperature: 0.8,
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`OpenAI API hatası (${res.status}): ${err}`);
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? "";
+}
+
 async function searchSerpAPI(query: string, language: string) {
+  const serpKey = Deno.env.get("SERP_API_KEY");
+  if (!serpKey) {
+    // SerpAPI key yoksa mock sonuç döndür (geliştirme için)
+    return [];
+  }
+
   const params = new URLSearchParams({
     engine: "google_shopping",
     q: query,
     gl: "tr",
     hl: language,
-    api_key: Deno.env.get("SERP_API_KEY")!,
+    api_key: serpKey,
     num: "3",
   });
 
-  const res = await fetch(`https://serpapi.com/search.json?${params}`);
-  const data = await res.json();
-  return data.shopping_results || [];
+  try {
+    const res = await fetch(`https://serpapi.com/search.json?${params}`);
+    const data = await res.json();
+    return data.shopping_results || [];
+  } catch {
+    return [];
+  }
 }
 
 serve(async (req) => {
@@ -35,7 +73,6 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
-    const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY")! });
 
     const { data: session, error } = await supabase
       .from("quiz_sessions")
@@ -47,32 +84,50 @@ serve(async (req) => {
 
     const chips = session.initial_chips || {};
 
-    // Hediye üretim promptu
+    // Konuşma geçmişini metin olarak formatla
+    const historyText = (session.conversation_history || [])
+      .map((m: { role: string; content: string }) =>
+        `${m.role === "user" ? "Kullanıcı" : "Asistan"}: ${m.content}`
+      )
+      .join("\n");
+
     const giftPrompt = `Bu konuşmaya dayanarak tam olarak 3 hediye öner.
 Alıcı: ${JSON.stringify(chips.recipients || [])}, Bütçe: ${chips.budget || "belirtilmedi"}
-Konuşma: ${JSON.stringify(session.conversation_history)}
 Dil: ${session.language}
 
-YALNIZCA aşağıdaki yapıda geçerli bir JSON dizisi döndür:
-[
-  {
-    "rank": 1,
-    "product_name": "Arama için spesifik ürün adı",
-    "search_query": "Google Shopping için optimize edilmiş arama sorgusu",
-    "reasoning": "Bu hediyenin bu kişiye neden uygun olduğu",
-    "description": "Kısa hediye açıklaması"
-  }
-]`;
+Konuşma:
+${historyText}
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: giftPrompt }],
-      response_format: { type: "json_object" },
-      temperature: 0.8,
-    });
+YALNIZCA aşağıdaki yapıda geçerli bir JSON nesnesi döndür (dizi "gifts" key'i altında):
+{
+  "gifts": [
+    {
+      "rank": 1,
+      "product_name": "Arama için spesifik ürün adı",
+      "search_query": "Google Shopping için optimize edilmiş Türkçe arama sorgusu",
+      "reasoning": "Bu hediyenin bu kişiye neden uygun olduğu — konuşmadan somut referanslarla",
+      "description": "Kısa hediye açıklaması (1-2 cümle)"
+    },
+    {
+      "rank": 2,
+      "product_name": "...",
+      "search_query": "...",
+      "reasoning": "...",
+      "description": "..."
+    },
+    {
+      "rank": 3,
+      "product_name": "...",
+      "search_query": "...",
+      "reasoning": "...",
+      "description": "..."
+    }
+  ]
+}`;
 
-    const raw = JSON.parse(completion.choices[0].message.content!);
-    const gifts = Array.isArray(raw) ? raw : raw.gifts || [];
+    const rawText = await callOpenAI(giftPrompt);
+    const parsed = JSON.parse(rawText);
+    const gifts = Array.isArray(parsed) ? parsed : (parsed.gifts || []);
 
     // Her hediye için SerpAPI çağrısı
     const enrichedGifts = await Promise.all(

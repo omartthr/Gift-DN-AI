@@ -1,196 +1,271 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
-import { QUIZ_BANK, type QuizQuestion } from "@/lib/data";
+import { useQuizStore } from "@/store/quizStore";
+import { useAuthStore } from "@/store/authStore";
 
-export default function QuizClient() {
+// ─── Chip seçimi: Onboarding ───────────────────────────────────────────────
+
+const recipientKeys = ["partner", "mom", "dad", "friend", "sibling", "coworker", "child", "other"] as const;
+const budgetKeys = ["b1", "b2", "b3", "b4", "b5"] as const;
+
+function OnboardingScreen() {
   const { t, lang } = useI18n();
+  const { chips, setChips, startSession, error } = useQuizStore();
+  const { user } = useAuthStore();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const bank: QuizQuestion[] = QUIZ_BANK[lang] || QUIZ_BANK["tr"];
 
-  const initialRecipient = searchParams.get("recipients") || "";
-  const initialBudget = searchParams.get("budget") || "";
+  const [selectedRecipients, setSelectedRecipients] = useState<string[]>(chips.recipients || []);
+  const [selectedBudget, setSelectedBudget] = useState(chips.budget || "");
+  const [starting, setStarting] = useState(false);
 
-  // Onboarding phase
-  const [phase, setPhase] = useState<"onboarding" | "quiz" | "finalizing">(
-    initialRecipient && initialBudget ? "quiz" : "onboarding"
-  );
-
-  const recipientKeys = ["partner", "mom", "dad", "friend", "sibling", "coworker", "child", "other"] as const;
-  const budgetKeys = ["b1", "b2", "b3", "b4", "b5"] as const;
-  const [selectedRecipients, setSelectedRecipients] = useState<string[]>(initialRecipient ? [initialRecipient] : []);
-  const [selectedBudget, setSelectedBudget] = useState(initialBudget);
   const canContinue = selectedRecipients.length > 0 && !!selectedBudget;
 
-  // Quiz phase
-  const [turn, setTurn] = useState(0);
-  const [answer, setAnswer] = useState("");
-  const [multi, setMulti] = useState<string[]>([]);
-  const [thinking, setThinking] = useState(false);
-  const [history, setHistory] = useState<{ q: string; a: string }[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const confidence = Math.min(0.95, 0.18 + turn * 0.14);
-  const current = bank[turn] || bank[bank.length - 1];
-
-  useEffect(() => {
-    setAnswer("");
-    setMulti([]);
-    if (inputRef.current && phase === "quiz") inputRef.current.focus();
-  }, [turn, phase]);
-
   const toggleRecipient = (k: string) => {
-    setSelectedRecipients(cur => cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k]);
-  };
-
-  const submit = (val?: string) => {
-    const finalVal = val ?? (current.type === "multi" ? multi.join(", ") : answer);
-    if (!finalVal && current.type !== "single") return;
-    setThinking(true);
-    const newHistory = [...history, { q: current.q, a: finalVal }];
-    setHistory(newHistory);
-    setTimeout(() => {
-      setThinking(false);
-      if (turn >= 5) {
-        setPhase("finalizing");
-        setTimeout(() => {
-          router.push("/results");
-        }, 2200);
-      } else {
-        setTurn(t => t + 1);
-      }
-    }, 950);
-  };
-
-  const onPickOption = (opt: string) => {
-    if (current.type === "multi") {
-      setMulti(m => m.includes(opt) ? m.filter(x => x !== opt) : [...m, opt]);
-    } else if (current.type === "single") {
-      submit(opt);
-    } else {
-      setAnswer(opt);
-    }
-  };
-
-  // FINALIZING screen
-  if (phase === "finalizing") {
-    return (
-      <div className="fade-in" style={{ minHeight: "calc(100vh - 200px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="col gap-24 items-center text-center" style={{ maxWidth: 560, padding: "0 24px" }}>
-          <div className="eyebrow">{t.quiz.eyebrow}</div>
-          <h1 className="serif" style={{ fontSize: "clamp(40px, 5vw, 64px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
-            <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.quiz.finalizing}</span>
-          </h1>
-          <div className="row gap-12 items-center">
-            <span className="dots"><span></span><span></span><span></span></span>
-            <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>OPENAI · GPT-4o · SERPAPI</span>
-          </div>
-          <div className="col gap-8" style={{ width: "100%", maxWidth: 420, marginTop: 16 }}>
-            {t.quiz.steps.map((step: string, i: number) => (
-              <div key={i} className="row gap-12 items-center fade-up" style={{ padding: "10px 14px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6, animationDelay: `${i * 0.4}s` }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }}></span>
-                <span style={{ fontSize: 13 }}>{step}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+    setSelectedRecipients(cur =>
+      cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k]
     );
-  }
+  };
 
-  // ONBOARDING screen
-  if (phase === "onboarding") {
-    return (
-      <div className="fade-in">
-        <div className="shell">
-          <section style={{ padding: "56px 0 40px" }}>
-            <div className="row gap-64 wrap" style={{ alignItems: "flex-start" }}>
-              <div className="col gap-24" style={{ flex: "1.2" }}>
-                <div className="eyebrow">{t.onboarding.eyebrow}</div>
-                <h1 className="serif" style={{ fontSize: "clamp(48px, 6.5vw, 88px)", lineHeight: 1.08, letterSpacing: "-0.02em" }}>
-                  {t.onboarding.title_a}<br />
-                  <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.onboarding.title_b}</span>
-                </h1>
-                <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.onboarding.sub}</p>
+  const handleStart = async () => {
+    if (!canContinue) return;
 
-                <div className="col gap-12" style={{ marginTop: 24 }}>
-                  <div className="row items-baseline gap-12">
-                    <span className="eyebrow">{t.onboarding.q1}</span>
-                    <span className="mono" style={{ fontSize: 11, color: "var(--muted-2)" }}>· {t.onboarding.q1_hint}</span>
-                  </div>
-                  <div className="row wrap gap-8">
-                    {recipientKeys.map(k => (
-                      <button key={k} className={"chip" + (selectedRecipients.includes(k) ? " active" : "")} onClick={() => toggleRecipient(k)}>
-                        {(t.recipients as Record<string, string>)[k]}
-                      </button>
-                    ))}
-                  </div>
+    const newChips = { recipients: selectedRecipients, budget: selectedBudget };
+    setChips(newChips);
+
+    if (!user) {
+      // Seçimleri store'a kaydet, sonra auth'a yönlendir
+      router.push("/auth?next=/quiz");
+      return;
+    }
+
+    setStarting(true);
+    await startSession(user.id, lang);
+    setStarting(false);
+  };
+
+  return (
+    <div className="fade-in">
+      <div className="shell">
+        <section style={{ padding: "56px 0 40px" }}>
+          <div className="row gap-64 wrap" style={{ alignItems: "flex-start" }}>
+            {/* Sol: Chip seçimleri */}
+            <div className="col gap-24" style={{ flex: "1.2" }}>
+              <div className="eyebrow">{t.onboarding.eyebrow}</div>
+              <h1 className="serif" style={{ fontSize: "clamp(48px, 6.5vw, 88px)", lineHeight: 1.08, letterSpacing: "-0.02em" }}>
+                {t.onboarding.title_a}<br />
+                <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.onboarding.title_b}</span>
+              </h1>
+              <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.onboarding.sub}</p>
+
+              {/* Kime */}
+              <div className="col gap-12" style={{ marginTop: 24 }}>
+                <div className="row items-baseline gap-12">
+                  <span className="eyebrow">{t.onboarding.q1}</span>
+                  <span className="mono" style={{ fontSize: 11, color: "var(--muted-2)" }}>· {t.onboarding.q1_hint}</span>
                 </div>
-
-                <div className="col gap-12" style={{ marginTop: 16 }}>
-                  <div className="row items-baseline gap-12">
-                    <span className="eyebrow">{t.onboarding.q2}</span>
-                    <span className="mono" style={{ fontSize: 11, color: "var(--muted-2)" }}>· {t.onboarding.q2_hint}</span>
-                  </div>
-                  <div className="row wrap gap-8">
-                    {budgetKeys.map(k => (
-                      <button key={k} className={"chip coral" + (selectedBudget === k ? " active" : "")} onClick={() => setSelectedBudget(k)}>
-                        {(t.budget as Record<string, string>)[k]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="row gap-12 items-center" style={{ marginTop: 32 }}>
-                  <button className="btn btn-ghost" onClick={() => router.push("/")}> ← {t.onboarding.back}</button>
-                  <button className="btn btn-coral btn-lg" disabled={!canContinue} onClick={() => setPhase("quiz")} style={{ opacity: canContinue ? 1 : 0.4 }}>
-                    {t.onboarding.cont} →
-                  </button>
+                <div className="row wrap gap-8">
+                  {recipientKeys.map(k => (
+                    <button
+                      key={k}
+                      className={"chip" + (selectedRecipients.includes(k) ? " active" : "")}
+                      onClick={() => toggleRecipient(k)}
+                    >
+                      {(t.recipients as Record<string, string>)[k]}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Right preview card */}
-              <div className="col gap-16" style={{ flex: 1, minWidth: 300 }}>
-                <div className="card" style={{ padding: 24 }}>
-                  <div className="eyebrow" style={{ marginBottom: 16 }}>{t.onboarding.your_picks}</div>
-                  <div className="col gap-16">
-                    <div>
-                      <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>{t.onboarding.for_whom}</div>
-                      <div className="serif" style={{ fontSize: 24, lineHeight: 1.15, minHeight: 32 }}>
-                        {selectedRecipients.length
-                          ? selectedRecipients.map(k => (t.recipients as Record<string, string>)[k]).join(", ")
-                          : <span style={{ color: "var(--muted-2)" }}>—</span>}
-                      </div>
+              {/* Bütçe */}
+              <div className="col gap-12" style={{ marginTop: 8 }}>
+                <div className="row items-baseline gap-12">
+                  <span className="eyebrow">{t.onboarding.q2}</span>
+                  <span className="mono" style={{ fontSize: 11, color: "var(--muted-2)" }}>· {t.onboarding.q2_hint}</span>
+                </div>
+                <div className="row wrap gap-8">
+                  {budgetKeys.map(k => (
+                    <button
+                      key={k}
+                      className={"chip coral" + (selectedBudget === k ? " active" : "")}
+                      onClick={() => setSelectedBudget(k)}
+                    >
+                      {(t.budget as Record<string, string>)[k]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {error && (
+                <div style={{ padding: "12px 16px", background: "rgba(217,74,41,0.08)", border: "1px solid rgba(217,74,41,0.2)", borderRadius: 6, fontSize: 13, color: "var(--coral)" }}>
+                  {error}
+                </div>
+              )}
+
+              <div className="row gap-12 items-center" style={{ marginTop: 24 }}>
+                <button className="btn btn-ghost" onClick={() => router.push("/")}>← {t.onboarding.back}</button>
+                <button
+                  className="btn btn-coral btn-lg"
+                  disabled={!canContinue || starting}
+                  onClick={handleStart}
+                  style={{ opacity: (!canContinue || starting) ? 0.4 : 1, minWidth: 160 }}
+                >
+                  {starting
+                    ? <span className="dots"><span /><span /><span /></span>
+                    : user
+                      ? <>{t.onboarding.cont} →</>
+                      : <>Giriş yap ve devam et →</>
+                  }
+                </button>
+              </div>
+            </div>
+
+            {/* Sağ: Önizleme kartı */}
+            <div className="col gap-16" style={{ flex: 1, minWidth: 280 }}>
+              <div className="card" style={{ padding: 24 }}>
+                <div className="eyebrow" style={{ marginBottom: 16 }}>{t.onboarding.your_picks}</div>
+                <div className="col gap-16">
+                  <div>
+                    <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>{t.onboarding.for_whom}</div>
+                    <div className="serif" style={{ fontSize: 22, lineHeight: 1.15, minHeight: 28 }}>
+                      {selectedRecipients.length
+                        ? selectedRecipients.map(k => (t.recipients as Record<string, string>)[k]).join(", ")
+                        : <span style={{ color: "var(--muted-2)" }}>—</span>}
                     </div>
-                    <hr className="rule-soft" />
-                    <div>
-                      <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>{t.onboarding.budget}</div>
-                      <div className="serif" style={{ fontSize: 24, lineHeight: 1.15, minHeight: 32 }}>
-                        {selectedBudget ? (t.budget as Record<string, string>)[selectedBudget] : <span style={{ color: "var(--muted-2)" }}>—</span>}
-                      </div>
+                  </div>
+                  <hr className="rule-soft" />
+                  <div>
+                    <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>{t.onboarding.budget}</div>
+                    <div className="serif" style={{ fontSize: 22, lineHeight: 1.15, minHeight: 28 }}>
+                      {selectedBudget ? (t.budget as Record<string, string>)[selectedBudget] : <span style={{ color: "var(--muted-2)" }}>—</span>}
                     </div>
-                    <hr className="rule-soft" />
-                    <div className="row gap-8 items-center" style={{ color: "var(--muted)", fontSize: 13 }}>
-                      <span className="dots"><span></span><span></span><span></span></span>
-                      <span>{t.onboarding.ai_ready}</span>
-                    </div>
+                  </div>
+                  <hr className="rule-soft" />
+                  <div className="row gap-8 items-center" style={{ color: "var(--muted)", fontSize: 13 }}>
+                    <span className="dots"><span /><span /><span /></span>
+                    <span>{t.onboarding.ai_ready}</span>
                   </div>
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+// ─── Yükleniyor (AI düşünüyor) ─────────────────────────────────────────────
+
+function LoadingScreen({ label = "AI düşünüyor…" }: { label?: string }) {
+  return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="col gap-16 items-center text-center">
+        <span className="dots"><span /><span /><span /></span>
+        <span className="mono" style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--muted)" }}>{label}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Finalizing: AI hediye üretiyor ───────────────────────────────────────
+
+function FinalizingScreen() {
+  const { t } = useI18n();
+  return (
+    <div className="fade-in" style={{ minHeight: "calc(100vh - 200px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="col gap-24 items-center text-center" style={{ maxWidth: 560, padding: "0 24px" }}>
+        <div className="eyebrow">{t.quiz.eyebrow}</div>
+        <h1 className="serif" style={{ fontSize: "clamp(40px, 5vw, 64px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
+          <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.quiz.finalizing}</span>
+        </h1>
+        <div className="row gap-12 items-center">
+          <span className="dots"><span /><span /><span /></span>
+          <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>OPENAI · GPT-4o · SERPAPI</span>
+        </div>
+        <div className="col gap-8" style={{ width: "100%", maxWidth: 420, marginTop: 16 }}>
+          {t.quiz.steps.map((step: string, i: number) => (
+            <div key={i} className="row gap-12 items-center fade-up"
+              style={{ padding: "10px 14px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6, animationDelay: `${i * 0.4}s` }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }} />
+              <span style={{ fontSize: 13 }}>{step}</span>
+            </div>
+          ))}
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  // QUIZ screen
+// ─── Ana Quiz Ekranı ───────────────────────────────────────────────────────
+
+function QuizScreen() {
+  const { t } = useI18n();
+  const { currentQuestion, chips, submitAnswer, phase, error } = useQuizStore();
+  const { user } = useAuthStore();
+
+  const [answer, setAnswer] = useState("");
+  const [multi, setMulti] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const turn = currentQuestion?.turn ?? 1;
+  const question = currentQuestion?.question ?? "";
+  const questionType = currentQuestion?.question_type ?? "text";
+  const options = currentQuestion?.options ?? [];
+  const confidence = currentQuestion?.confidence_score ?? 0;
+  const reasoning = currentQuestion?.reasoning ?? "";
+
+  // Yeni soru gelince sıfırla
+  useEffect(() => {
+    setAnswer("");
+    setMulti([]);
+    if (inputRef.current && questionType === "text") {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [question, questionType]);
+
+  const handleSubmit = useCallback(async (val?: string) => {
+    const finalVal = val ?? (questionType === "multi_choice" ? multi.join(", ") : answer);
+    if (!finalVal && questionType !== "single_choice") return;
+    setSubmitting(true);
+    await submitAnswer(finalVal);
+    setSubmitting(false);
+  }, [answer, multi, questionType, submitAnswer]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  const handleOptionClick = (opt: string) => {
+    if (questionType === "multi_choice") {
+      setMulti(m => m.includes(opt) ? m.filter(x => x !== opt) : [...m, opt]);
+    } else if (questionType === "single_choice") {
+      handleSubmit(opt);
+    } else {
+      setAnswer(opt);
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }
+  };
+
+  const isSubmitDisabled =
+    submitting ||
+    (questionType === "multi_choice" && !multi.length) ||
+    (questionType === "text" && !answer.trim());
+
+  const progressPct = Math.min(((turn) / 10) * 100, 100);
+  const confidencePct = Math.round(confidence * 100);
+
   return (
     <div className="fade-in">
-      {/* Sticky progress */}
+      {/* Sticky progress bar */}
       <div style={{ position: "sticky", top: 0, background: "var(--cream)", zIndex: 5 }}>
         <div className="shell">
           <div className="row items-center justify-between" style={{ padding: "20px 0 12px" }}>
@@ -198,120 +273,228 @@ export default function QuizClient() {
               <span className="eyebrow">{t.quiz.eyebrow}</span>
               <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>·</span>
               <span className="mono" style={{ fontSize: 12, color: "var(--ink)" }}>
-                {t.quiz.turn} {turn + 1} <span style={{ color: "var(--muted-2)" }}>{t.quiz.of}</span>
+                {t.quiz.turn} {turn} <span style={{ color: "var(--muted-2)" }}>{t.quiz.of}</span>
               </span>
             </div>
             <div className="row gap-16 items-center">
               <div className="col" style={{ alignItems: "flex-end" }}>
                 <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.quiz.confidence}</span>
-                <span className="serif" style={{ fontSize: 18, color: "var(--coral)" }}>{confidence.toFixed(2)}</span>
+                <span className="serif" style={{ fontSize: 18, color: "var(--coral)" }}>{confidencePct}%</span>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setPhase("onboarding")}>← {t.onboarding.back}</button>
             </div>
           </div>
-          <div className="progress"><span style={{ width: `${((turn + 1) / 10) * 100}%` }}></span></div>
+          <div className="progress"><span style={{ width: `${progressPct}%` }} /></div>
         </div>
       </div>
 
       <div className="shell">
         <div className="row gap-64 wrap" style={{ padding: "60px 0", alignItems: "flex-start" }}>
-          {/* Main question column */}
+
+          {/* Ana soru kolonu */}
           <div className="col gap-32" style={{ flex: "1.6" }}>
+            {/* Soru numarası + eyebrow */}
             <div className="row items-baseline gap-12">
-              <span className="serif" style={{ fontSize: 56, color: "var(--coral)" }}>{String(turn + 1).padStart(2, "0")}</span>
+              <span className="serif" style={{ fontSize: 56, color: "var(--coral)", lineHeight: 1 }}>
+                {String(turn).padStart(2, "0")}
+              </span>
               <span className="eyebrow">{t.quiz.ai_question}</span>
             </div>
-            <h1 key={turn} className="serif fade-up" style={{ fontSize: "clamp(40px, 5.5vw, 72px)", lineHeight: 1.05, letterSpacing: "-0.02em", maxWidth: 920 }}>
-              {current.q}
+
+            {/* Soru metni — ekran görüntüsündeki gibi büyük serif */}
+            <h1 key={question} className="serif fade-up"
+              style={{ fontSize: "clamp(36px, 5vw, 68px)", lineHeight: 1.06, letterSpacing: "-0.02em", maxWidth: 860 }}>
+              {question}
             </h1>
 
-            {current.type === "text" && (
-              <div className="col gap-16" key={"text" + turn}>
-                <input ref={inputRef} className="input serif" style={{ fontSize: 28, paddingBottom: 14, fontStyle: "italic", color: "var(--ink)" }}
-                  placeholder={t.quiz.placeholder} value={answer} onChange={e => setAnswer(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") submit(); }} />
-                <div className="row wrap gap-8">
-                  {current.options.map((opt, i) => (
-                    <button key={i} className="chip" onClick={() => onPickOption(opt)}>{opt}</button>
-                  ))}
-                </div>
+            {/* Text tipi: underline input + chip öneriler */}
+            {(questionType === "text" || (!questionType)) && (
+              <div className="col gap-16" key={"text-" + turn}>
+                <input
+                  ref={inputRef}
+                  className="input"
+                  style={{ fontSize: "clamp(18px, 2.5vw, 26px)", paddingBottom: 14, color: "var(--ink)", fontFamily: "inherit" }}
+                  placeholder={t.quiz.placeholder}
+                  value={answer}
+                  onChange={e => setAnswer(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={submitting}
+                />
+                {options.length > 0 && (
+                  <div className="row wrap gap-8">
+                    {options.map((opt, i) => (
+                      <button key={i} className="chip" onClick={() => handleOptionClick(opt)} disabled={submitting}>
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            {current.type === "single" && (
-              <div className="col gap-12" key={"single" + turn}>
-                {current.options.map((opt, i) => (
-                  <button key={i} onClick={() => onPickOption(opt)}
+            {/* Single choice: büyük liste butonları */}
+            {questionType === "single_choice" && (
+              <div className="col gap-10" key={"single-" + turn}>
+                {options.map((opt, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleOptionClick(opt)}
+                    disabled={submitting}
                     className="row items-center justify-between"
-                    style={{ padding: "18px 24px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6, fontFamily: "inherit", fontSize: 18, color: "var(--ink)", cursor: "pointer", textAlign: "left", transition: "all 0.15s ease", width: "100%" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ink)"; (e.currentTarget as HTMLElement).style.background = "var(--cream-2)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--rule)"; (e.currentTarget as HTMLElement).style.background = "var(--bone)"; }}>
+                    style={{
+                      padding: "16px 22px",
+                      background: "var(--bone)",
+                      border: "1px solid var(--rule)",
+                      borderRadius: 6,
+                      fontFamily: "inherit",
+                      fontSize: "clamp(15px, 2vw, 18px)",
+                      color: "var(--ink)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.15s ease",
+                      width: "100%",
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--ink)";
+                      (e.currentTarget as HTMLElement).style.background = "var(--cream-2)";
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--rule)";
+                      (e.currentTarget as HTMLElement).style.background = "var(--bone)";
+                    }}
+                  >
                     <span>{opt}</span>
-                    <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)" }}>{String.fromCharCode(65 + i)}</span>
+                    <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)" }}>
+                      {String.fromCharCode(65 + i)}
+                    </span>
                   </button>
                 ))}
               </div>
             )}
 
-            {current.type === "multi" && (
-              <div className="col gap-16" key={"multi" + turn}>
+            {/* Multi choice: chip grubu */}
+            {questionType === "multi_choice" && (
+              <div className="col gap-16" key={"multi-" + turn}>
                 <div className="row wrap gap-8">
-                  {current.options.map((opt, i) => (
-                    <button key={i} className={"chip" + (multi.includes(opt) ? " active" : "")} onClick={() => onPickOption(opt)}>{opt}</button>
+                  {options.map((opt, i) => (
+                    <button
+                      key={i}
+                      className={"chip" + (multi.includes(opt) ? " active" : "")}
+                      onClick={() => handleOptionClick(opt)}
+                      disabled={submitting}
+                    >
+                      {opt}
+                    </button>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="row gap-12 items-center" style={{ marginTop: 16 }}>
-              <button className="btn btn-coral btn-lg" onClick={() => submit()}
-                disabled={(current.type === "multi" && !multi.length) || (current.type === "text" && !answer.trim()) || thinking}
-                style={{ opacity: thinking ? 0.5 : 1 }}>
-                {thinking ? <span className="dots"><span></span><span></span><span></span></span> : <>{t.quiz.submit} →</>}
+            {/* Hata mesajı */}
+            {error && (
+              <div style={{ padding: "12px 16px", background: "rgba(217,74,41,0.08)", border: "1px solid rgba(217,74,41,0.2)", borderRadius: 6, fontSize: 13, color: "var(--coral)" }}>
+                {error}
+              </div>
+            )}
+
+            {/* Alt butonlar — ekran görüntüsündeki gibi: "Devam et →", "Geç", "↵ ENTER" */}
+            <div className="row gap-12 items-center" style={{ marginTop: 8 }}>
+              {questionType !== "single_choice" && (
+                <button
+                  className="btn btn-coral btn-lg"
+                  onClick={() => handleSubmit()}
+                  disabled={isSubmitDisabled}
+                  style={{ opacity: isSubmitDisabled ? 0.4 : 1 }}
+                >
+                  {submitting
+                    ? <span className="dots"><span /><span /><span /></span>
+                    : <>{t.quiz.submit} →</>
+                  }
+                </button>
+              )}
+              <button
+                className="btn btn-bone btn-sm"
+                style={{ borderRadius: 999 }}
+                onClick={() => handleSubmit("—")}
+                disabled={submitting}
+              >
+                {t.quiz.skip}
               </button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setTurn(t => t + 1)} disabled={thinking}>{t.quiz.skip}</button>
-              {current.type === "text" && <span className="mono" style={{ fontSize: 11, color: "var(--muted)", marginLeft: 12 }}>↵ ENTER</span>}
+              {questionType === "text" && (
+                <span className="mono" style={{ fontSize: 11, color: "var(--muted)", marginLeft: 8 }}>
+                  ↵ ENTER
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Right column — AI reasoning */}
-          <div className="col gap-16" style={{ flex: 1, minWidth: 300, position: "sticky", top: 90 }}>
-            <div className="card" style={{ padding: 20 }}>
-              <div className="eyebrow" style={{ marginBottom: 10 }}>{t.quiz.reasoning}</div>
-              <p key={turn} className="fade-in" style={{ fontSize: 14, lineHeight: 1.55, color: "var(--ink-2)" }}>"{current.reason}"</p>
-              <hr className="rule-soft" style={{ margin: "16px 0" }} />
-              <div className="row gap-8 items-center">
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: thinking ? "var(--coral)" : "var(--sage)", display: "inline-block" }}></span>
-                <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)" }}>
-                  {thinking ? t.quiz.thinking : t.quiz.ai_ready}
-                </span>
-              </div>
-            </div>
-
-            {history.length > 0 && (
+          {/* Sağ kolon: AI reasoning + seçimler özeti */}
+          <div className="col gap-16" style={{ flex: 1, minWidth: 280, position: "sticky", top: 90 }}>
+            {reasoning && (
               <div className="card" style={{ padding: 20 }}>
-                <div className="eyebrow" style={{ marginBottom: 12 }}>{t.quiz.so_far}</div>
-                <div className="col gap-12">
-                  {history.slice(-3).map((h, i) => (
-                    <div key={i} className="col gap-4">
-                      <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>Q{history.length - 2 + i}</span>
-                      <span style={{ fontSize: 13, color: "var(--ink-2)" }}>{h.q.length > 52 ? h.q.slice(0, 52) + "…" : h.q}</span>
-                      <span className="serif-italic" style={{ fontSize: 14, color: "var(--coral)" }}>"{h.a.length > 40 ? h.a.slice(0, 40) + "…" : h.a}"</span>
-                    </div>
-                  ))}
+                <div className="eyebrow" style={{ marginBottom: 10 }}>{t.quiz.reasoning}</div>
+                <p key={question} className="fade-in" style={{ fontSize: 14, lineHeight: 1.55, color: "var(--ink-2)" }}>
+                  "{reasoning}"
+                </p>
+                <hr className="rule-soft" style={{ margin: "16px 0" }} />
+                <div className="row gap-8 items-center">
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: submitting ? "var(--coral)" : "var(--sage)", display: "inline-block" }} />
+                  <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)" }}>
+                    {submitting ? t.quiz.thinking : t.quiz.ai_ready}
+                  </span>
                 </div>
               </div>
             )}
 
-            <div className="row gap-8 items-center" style={{ padding: "0 4px" }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }}></span>
-              <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>
-                {selectedRecipients.map(k => (t.recipients as Record<string, string>)[k]).join(", ")} · {selectedBudget ? (t.budget as Record<string, string>)[selectedBudget] : ""}
-              </span>
+            {/* Bağlam özeti */}
+            <div className="card" style={{ padding: 16 }}>
+              <div className="eyebrow" style={{ marginBottom: 10 }}>BAĞLAM</div>
+              <div className="col gap-8">
+                <div className="row gap-8 items-center">
+                  <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>KİM</span>
+                  <span style={{ fontSize: 13 }}>
+                    {(chips.recipients || []).join(", ")}
+                  </span>
+                </div>
+                <div className="row gap-8 items-center">
+                  <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>BÜTÇE</span>
+                  <span style={{ fontSize: 13 }}>{chips.budget}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+// ─── Ana bileşen: Phase yönetimi ───────────────────────────────────────────
+
+export default function QuizClient() {
+  const { phase, currentQuestion } = useQuizStore();
+  const { lang } = useI18n();
+  const router = useRouter();
+
+  // Sonuçlar hazır olunca yönlendir
+  useEffect(() => {
+    if (phase === "results") {
+      router.push("/results");
+    }
+  }, [phase, router]);
+
+  if (phase === "chips") return <OnboardingScreen />;
+
+  if (phase === "loading") {
+    return <LoadingScreen label={lang === "tr" ? "AI düşünüyor…" : "AI thinking…"} />;
+  }
+
+  if (phase === "generating" || (phase === "quiz" && !currentQuestion)) {
+    return <FinalizingScreen />;
+  }
+
+  if (phase === "quiz" && currentQuestion) {
+    return <QuizScreen />;
+  }
+
+  return <LoadingScreen />;
 }
