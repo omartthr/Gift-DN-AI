@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import WishlistClient from "./WishlistClient";
 
 export const metadata: Metadata = {
-  title: "İstek Listesi | Gift DN-AI",
+  title: "İstek Listem · Gift DN-AI",
+  description: "Kaydettiğin hediye önerileri.",
 };
 
 export default function WishlistPage() {

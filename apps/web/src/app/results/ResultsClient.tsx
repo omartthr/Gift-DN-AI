@@ -1,105 +1,162 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useQuizStore } from "@/store/quizStore";
-import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
-import { getSupabaseClient } from "@/lib/supabase";
-import type { GiftSuggestion } from "@/types";
-import ShareModal from "@/components/ShareModal";
-import styles from "./Results.module.css";
+import { GIFT_RESULTS, type GiftResult } from "@/lib/data";
+import ImagePlaceholder from "@/components/ImagePlaceholder";
+
+type WishlistItem = { name: string; store: string; tone: string; price: string; desc: string; note: string };
 
 export default function ResultsClient() {
-  const { t } = useI18n();
-  const { gifts, session, reset } = useQuizStore();
-  const { user } = useAuthStore();
+  const { t, lang } = useI18n();
+  const router = useRouter();
+  const gifts: GiftResult[] = GIFT_RESULTS[lang] || GIFT_RESULTS["tr"];
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [shareGift, setShareGift] = useState<GiftResult | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [shareGift, setShareGift] = useState<GiftSuggestion | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 2400);
   };
 
-  const addToWishlist = async (gift: GiftSuggestion) => {
-    if (!user) return;
-    const supabase = getSupabaseClient();
-    await supabase.from("wishlists").insert({
-      user_id: user.id,
-      product_name: gift.product_name,
-      product_link: gift.product_link,
-      product_image: gift.product_image,
-    });
-    showToast(t.results.added_wishlist);
+  const addToWishlist = (g: GiftResult) => {
+    if (!wishlist.some(w => w.name === g.name)) {
+      setWishlist(w => [...w, { name: g.name, store: g.store, tone: g.tone, price: g.price, desc: g.desc, note: "" }]);
+      showToast(lang === "tr" ? "İstek listesine eklendi" : "Added to your wishlist");
+    }
   };
-
-  if (!gifts.length) {
-    return (
-      <div className={styles.empty}>
-        <p>Henüz sonuç yok.</p>
-        <Link href="/quiz" className="btn btn-primary">Ankete Başla</Link>
-      </div>
-    );
-  }
 
   return (
-    <div className={styles.page}>
-      <div className="container">
-        <div className={`${styles.header} animate-fade-in-up`}>
-          <h1 className="gradient-text">{t.results.title}</h1>
-          <p>{t.results.subtitle(gifts.length)}</p>
-        </div>
-
-        <div className={`${styles.grid} stagger-children`}>
-          {gifts.map(gift => (
-            <div key={gift.id} className={`card animate-fade-in-up ${styles.giftCard}`}>
-              <div className={styles.rankBadge}>
-                {gift.rank === 1 ? "🥇" : gift.rank === 2 ? "🥈" : "🥉"}
-                <span>{t.results.rank(gift.rank)}</span>
+    <div className="fade-in">
+      <div className="shell">
+        <section style={{ padding: "56px 0 32px" }}>
+          <div className="row justify-between items-end">
+            <div className="col gap-16" style={{ maxWidth: 760 }}>
+              <div className="row gap-12 items-center">
+                <span className="eyebrow">{t.results.eyebrow}</span>
+                <span className="tag tag-sage">AI · 0.89</span>
               </div>
-              {gift.product_image && (
-                <div className={styles.imageWrap}>
-                  <img src={gift.product_image} alt={gift.product_name} className={styles.image} />
-                </div>
-              )}
-              <div className={styles.content}>
-                <h3 className={styles.productName}>{gift.product_name}</h3>
-                <p className={styles.desc}>{gift.product_description}</p>
-                {gift.current_price && (
-                  <div className={styles.meta}>
-                    <span className={styles.price}>{gift.current_price}</span>
-                    {gift.source_store && <span className={styles.store}>{gift.source_store}</span>}
-                  </div>
-                )}
-                <div className={styles.reasoning}>
-                  <span className={styles.reasoningLabel}>💡 {t.results.why}</span>
-                  <p>{gift.reasoning}</p>
-                </div>
-                <div className={styles.actions}>
-                  {gift.product_link && (
-                    <a href={gift.product_link} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
-                      🛍️ {t.results.view_product}
-                    </a>
-                  )}
-                  <button className="btn btn-secondary btn-sm" onClick={() => addToWishlist(gift)}>❤️ {t.results.add_wishlist}</button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setShareGift(gift)}>📤 {t.results.share_community}</button>
-                </div>
-              </div>
+              <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
+                {t.results.title_a} <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.results.title_b}</span>
+              </h1>
+              <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.results.sub}</p>
             </div>
-          ))}
-        </div>
+            <button className="btn btn-bone btn-sm" onClick={() => router.push("/quiz")}>↻ {t.results.restart}</button>
+          </div>
+        </section>
 
-        <div className={styles.bottomActions}>
-          <button className="btn btn-secondary" onClick={reset}>🔄 Yeni Anket</button>
-          <Link href="/community" className="btn btn-ghost">👀 Topluluğu Keşfet</Link>
-        </div>
+        <hr className="rule" />
+
+        <section style={{ padding: "32px 0 80px" }}>
+          <div className="col gap-24">
+            {gifts.map((g, i) => {
+              const saved = wishlist.some(w => w.name === g.name);
+              return (
+                <div key={i} className="fade-up" style={{ animationDelay: `${i * 0.12}s` }}>
+                  <div className="row gap-32 wrap" style={{ alignItems: "stretch" }}>
+                    <div style={{ flex: "0 0 380px" }}>
+                      <ImagePlaceholder tone={g.tone} label={g.name.toUpperCase()} h={380} />
+                    </div>
+                    <div className="col gap-16" style={{ flex: 1, padding: "4px 0" }}>
+                      <div className="row gap-12 items-baseline">
+                        <span className="serif" style={{ fontSize: 48, color: "var(--coral)" }}>0{g.rank}</span>
+                        <span className="eyebrow">{t.results.rank} · {g.rank}/3</span>
+                      </div>
+                      <h2 className="serif" style={{ fontSize: 42, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{g.name}</h2>
+                      <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.55, maxWidth: 560 }}>{g.desc}</p>
+
+                      <div className="card" style={{ padding: 18, background: "var(--cream-2)", border: "1px solid var(--rule)", maxWidth: 580 }}>
+                        <div className="eyebrow" style={{ marginBottom: 8 }}>{t.results.why}</div>
+                        <p className="serif-italic" style={{ fontSize: 18, lineHeight: 1.45, color: "var(--ink)" }}>"{g.why}"</p>
+                      </div>
+
+                      <div className="row gap-24 items-baseline" style={{ marginTop: 8 }}>
+                        <div className="col gap-4">
+                          <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.results.price.toUpperCase()}</span>
+                          <span className="serif" style={{ fontSize: 24 }}>{g.price}</span>
+                        </div>
+                        <div className="col gap-4">
+                          <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.results.from.toUpperCase()}</span>
+                          <span style={{ fontSize: 16 }}>{g.store}</span>
+                        </div>
+                        <div className="col gap-4">
+                          <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.results.status}</span>
+                          <span style={{ fontSize: 13, color: "var(--sage)" }}>● {g.stock}</span>
+                        </div>
+                      </div>
+
+                      <div className="row gap-8 items-center wrap" style={{ marginTop: 16 }}>
+                        <button className="btn btn-coral" onClick={() => window.open("about:blank", "_blank")}>{t.results.view} ↗</button>
+                        <button className={"btn " + (saved ? "btn-bone" : "btn-ghost")} onClick={() => addToWishlist(g)}>
+                          {saved ? "✓ " + t.results.saved : "♡ " + t.results.wishlist}
+                        </button>
+                        <button className="btn btn-ghost" onClick={() => setShareGift(g)}>↗ {t.results.share}</button>
+                      </div>
+                    </div>
+                  </div>
+                  {i < gifts.length - 1 && <hr className="rule-soft" style={{ marginTop: 32 }} />}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </div>
 
-      {shareGift && session && (
-        <ShareModal gift={shareGift} sessionId={session.id} onClose={() => setShareGift(null)} onSuccess={() => { setShareGift(null); showToast("Toplulukla paylaşıldı! 🎉"); }} />
+      {/* Share Modal */}
+      {shareGift && (
+        <ShareModal gift={shareGift} onClose={() => setShareGift(null)} onPost={() => { showToast(lang === "tr" ? "Toplulukla paylaşıldı" : "Shared with the community"); setShareGift(null); }} />
       )}
-      {toast && <div className="toast">{toast}</div>}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fade-up" style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "var(--ink)", color: "var(--cream)", padding: "12px 20px", borderRadius: 999, fontSize: 13, zIndex: 60, boxShadow: "0 10px 30px rgba(27,22,17,0.2)" }}>
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ShareModal({ gift, onClose, onPost }: { gift: GiftResult; onClose: () => void; onPost: () => void }) {
+  const { t, lang } = useI18n();
+  const [recipient, setRecipient] = useState(lang === "tr" ? "Annem için" : "For my mom");
+  const [feedback, setFeedback] = useState("");
+  const [anon, setAnon] = useState(false);
+
+  return (
+    <div className="fade-in" style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(27,22,17,0.4)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+      onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="fade-up"
+        style={{ background: "var(--cream)", borderRadius: 8, padding: "40px 48px", maxWidth: 560, width: "100%", border: "1px solid var(--rule)", position: "relative" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 18, right: 22, background: "transparent", border: 0, fontSize: 18, cursor: "pointer", color: "var(--muted)" }}>×</button>
+        <div className="col gap-20">
+          <div className="eyebrow">{t.share.title.toUpperCase()}</div>
+          <h2 className="serif" style={{ fontSize: 34, lineHeight: 1.1, letterSpacing: "-0.01em" }}>{gift.name}</h2>
+          <p style={{ fontSize: 14, color: "var(--muted)" }}>{t.share.sub}</p>
+          <div className="col gap-12">
+            <div>
+              <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", textTransform: "uppercase" }}>{t.share.recipient}</span>
+              <input className="input" value={recipient} onChange={e => setRecipient(e.target.value)} />
+            </div>
+            <div>
+              <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", textTransform: "uppercase" }}>{t.share.feedback}</span>
+              <textarea className="input" rows={3} style={{ resize: "none", borderBottom: "1px solid var(--rule)" }}
+                placeholder={lang === "tr" ? "Hediye nasıl karşılandı?" : "How was it received?"}
+                value={feedback} onChange={e => setFeedback(e.target.value)} />
+            </div>
+            <label className="row gap-8 items-center" style={{ marginTop: 4, cursor: "pointer", fontSize: 13, color: "var(--ink-2)" }}>
+              <input type="checkbox" checked={anon} onChange={e => setAnon(e.target.checked)} style={{ accentColor: "var(--coral)" }} />
+              <span>{t.share.anon}</span>
+            </label>
+          </div>
+          <div className="row gap-8" style={{ marginTop: 8 }}>
+            <button className="btn btn-ghost" onClick={onClose}>{t.share.cancel}</button>
+            <button className="btn btn-coral" onClick={onPost}>↗ {t.share.post}</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

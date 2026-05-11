@@ -1,155 +1,316 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
-import { useQuizStore } from "@/store/quizStore";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
-import styles from "./Quiz.module.css";
-
-const RECIPIENTS = ["sevgili", "anne", "baba", "arkadas", "kardes", "is_arkadasi", "cocuk", "diger"] as const;
-const BUDGETS = ["0_250", "250_500", "500_1000", "1000_3000", "3000_plus"] as const;
+import { QUIZ_BANK, type QuizQuestion } from "@/lib/data";
 
 export default function QuizClient() {
   const { t, lang } = useI18n();
-  const { user } = useAuthStore();
-  const { chips, setChips, startSession, submitAnswer, currentQuestion, phase, error, session, gifts } = useQuizStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const bank: QuizQuestion[] = QUIZ_BANK[lang] || QUIZ_BANK["tr"];
+
+  const initialRecipient = searchParams.get("recipients") || "";
+  const initialBudget = searchParams.get("budget") || "";
+
+  // Onboarding phase
+  const [phase, setPhase] = useState<"onboarding" | "quiz" | "finalizing">(
+    initialRecipient && initialBudget ? "quiz" : "onboarding"
+  );
+
+  const recipientKeys = ["partner", "mom", "dad", "friend", "sibling", "coworker", "child", "other"] as const;
+  const budgetKeys = ["b1", "b2", "b3", "b4", "b5"] as const;
+  const [selectedRecipients, setSelectedRecipients] = useState<string[]>(initialRecipient ? [initialRecipient] : []);
+  const [selectedBudget, setSelectedBudget] = useState(initialBudget);
+  const canContinue = selectedRecipients.length > 0 && !!selectedBudget;
+
+  // Quiz phase
+  const [turn, setTurn] = useState(0);
   const [answer, setAnswer] = useState("");
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [multi, setMulti] = useState<string[]>([]);
+  const [thinking, setThinking] = useState(false);
+  const [history, setHistory] = useState<{ q: string; a: string }[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const confidence = Math.min(0.95, 0.18 + turn * 0.14);
+  const current = bank[turn] || bank[bank.length - 1];
 
   useEffect(() => {
-    if (phase === "results") router.push("/results");
-  }, [phase]);
-
-  useEffect(() => {
-    if (!user && typeof window !== "undefined") router.push("/auth");
-  }, [user]);
-
-  const toggleRecipient = (r: string) => {
-    const cur = chips.recipients;
-    setChips({ ...chips, recipients: cur.includes(r) ? cur.filter(x => x !== r) : [...cur, r] });
-  };
-
-  const handleStart = async () => {
-    if (!chips.recipients.length || !chips.budget || !user) return;
-    await startSession(user.id, lang);
-  };
-
-  const handleSubmit = async () => {
-    if (phase !== "quiz" || !currentQuestion) return;
-    const finalAnswer = currentQuestion.question_type === "text" ? answer : selectedOptions.join(", ");
     setAnswer("");
-    setSelectedOptions([]);
-    await submitAnswer(finalAnswer);
+    setMulti([]);
+    if (inputRef.current && phase === "quiz") inputRef.current.focus();
+  }, [turn, phase]);
+
+  const toggleRecipient = (k: string) => {
+    setSelectedRecipients(cur => cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k]);
   };
 
-  const toggleOption = (opt: string) => {
-    if (currentQuestion?.question_type === "single_choice") setSelectedOptions([opt]);
-    else setSelectedOptions(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]);
+  const submit = (val?: string) => {
+    const finalVal = val ?? (current.type === "multi" ? multi.join(", ") : answer);
+    if (!finalVal && current.type !== "single") return;
+    setThinking(true);
+    const newHistory = [...history, { q: current.q, a: finalVal }];
+    setHistory(newHistory);
+    setTimeout(() => {
+      setThinking(false);
+      if (turn >= 5) {
+        setPhase("finalizing");
+        setTimeout(() => {
+          router.push("/results");
+        }, 2200);
+      } else {
+        setTurn(t => t + 1);
+      }
+    }, 950);
   };
 
-  const progress = session ? Math.min((session.current_turn / 10) * 100, 100) : 0;
+  const onPickOption = (opt: string) => {
+    if (current.type === "multi") {
+      setMulti(m => m.includes(opt) ? m.filter(x => x !== opt) : [...m, opt]);
+    } else if (current.type === "single") {
+      submit(opt);
+    } else {
+      setAnswer(opt);
+    }
+  };
 
+  // FINALIZING screen
+  if (phase === "finalizing") {
+    return (
+      <div className="fade-in" style={{ minHeight: "calc(100vh - 200px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="col gap-24 items-center text-center" style={{ maxWidth: 560, padding: "0 24px" }}>
+          <div className="eyebrow">{t.quiz.eyebrow}</div>
+          <h1 className="serif" style={{ fontSize: "clamp(40px, 5vw, 64px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
+            <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.quiz.finalizing}</span>
+          </h1>
+          <div className="row gap-12 items-center">
+            <span className="dots"><span></span><span></span><span></span></span>
+            <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>OPENAI · GPT-4o · SERPAPI</span>
+          </div>
+          <div className="col gap-8" style={{ width: "100%", maxWidth: 420, marginTop: 16 }}>
+            {t.quiz.steps.map((step: string, i: number) => (
+              <div key={i} className="row gap-12 items-center fade-up" style={{ padding: "10px 14px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6, animationDelay: `${i * 0.4}s` }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }}></span>
+                <span style={{ fontSize: 13 }}>{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ONBOARDING screen
+  if (phase === "onboarding") {
+    return (
+      <div className="fade-in">
+        <div className="shell">
+          <section style={{ padding: "56px 0 40px" }}>
+            <div className="row gap-64 wrap" style={{ alignItems: "flex-start" }}>
+              <div className="col gap-24" style={{ flex: "1.2" }}>
+                <div className="eyebrow">{t.onboarding.eyebrow}</div>
+                <h1 className="serif" style={{ fontSize: "clamp(48px, 6.5vw, 88px)", lineHeight: 1.08, letterSpacing: "-0.02em" }}>
+                  {t.onboarding.title_a}<br />
+                  <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.onboarding.title_b}</span>
+                </h1>
+                <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.onboarding.sub}</p>
+
+                <div className="col gap-12" style={{ marginTop: 24 }}>
+                  <div className="row items-baseline gap-12">
+                    <span className="eyebrow">{t.onboarding.q1}</span>
+                    <span className="mono" style={{ fontSize: 11, color: "var(--muted-2)" }}>· {t.onboarding.q1_hint}</span>
+                  </div>
+                  <div className="row wrap gap-8">
+                    {recipientKeys.map(k => (
+                      <button key={k} className={"chip" + (selectedRecipients.includes(k) ? " active" : "")} onClick={() => toggleRecipient(k)}>
+                        {(t.recipients as Record<string, string>)[k]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="col gap-12" style={{ marginTop: 16 }}>
+                  <div className="row items-baseline gap-12">
+                    <span className="eyebrow">{t.onboarding.q2}</span>
+                    <span className="mono" style={{ fontSize: 11, color: "var(--muted-2)" }}>· {t.onboarding.q2_hint}</span>
+                  </div>
+                  <div className="row wrap gap-8">
+                    {budgetKeys.map(k => (
+                      <button key={k} className={"chip coral" + (selectedBudget === k ? " active" : "")} onClick={() => setSelectedBudget(k)}>
+                        {(t.budget as Record<string, string>)[k]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="row gap-12 items-center" style={{ marginTop: 32 }}>
+                  <button className="btn btn-ghost" onClick={() => router.push("/")}> ← {t.onboarding.back}</button>
+                  <button className="btn btn-coral btn-lg" disabled={!canContinue} onClick={() => setPhase("quiz")} style={{ opacity: canContinue ? 1 : 0.4 }}>
+                    {t.onboarding.cont} →
+                  </button>
+                </div>
+              </div>
+
+              {/* Right preview card */}
+              <div className="col gap-16" style={{ flex: 1, minWidth: 300 }}>
+                <div className="card" style={{ padding: 24 }}>
+                  <div className="eyebrow" style={{ marginBottom: 16 }}>{t.onboarding.your_picks}</div>
+                  <div className="col gap-16">
+                    <div>
+                      <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>{t.onboarding.for_whom}</div>
+                      <div className="serif" style={{ fontSize: 24, lineHeight: 1.15, minHeight: 32 }}>
+                        {selectedRecipients.length
+                          ? selectedRecipients.map(k => (t.recipients as Record<string, string>)[k]).join(", ")
+                          : <span style={{ color: "var(--muted-2)" }}>—</span>}
+                      </div>
+                    </div>
+                    <hr className="rule-soft" />
+                    <div>
+                      <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>{t.onboarding.budget}</div>
+                      <div className="serif" style={{ fontSize: 24, lineHeight: 1.15, minHeight: 32 }}>
+                        {selectedBudget ? (t.budget as Record<string, string>)[selectedBudget] : <span style={{ color: "var(--muted-2)" }}>—</span>}
+                      </div>
+                    </div>
+                    <hr className="rule-soft" />
+                    <div className="row gap-8 items-center" style={{ color: "var(--muted)", fontSize: 13 }}>
+                      <span className="dots"><span></span><span></span><span></span></span>
+                      <span>{t.onboarding.ai_ready}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  // QUIZ screen
   return (
-    <div className={styles.page}>
-      <div className="container" style={{ maxWidth: 640 }}>
-
-        {/* ── Chip Phase ── */}
-        {phase === "chips" && (
-          <div className={`card-glass animate-scale-in ${styles.card}`}>
-            <div className={styles.header}>
-              <h1 className="gradient-text">{t.quiz.title}</h1>
-              <p>{t.quiz.subtitle}</p>
+    <div className="fade-in">
+      {/* Sticky progress */}
+      <div style={{ position: "sticky", top: 0, background: "var(--cream)", zIndex: 5 }}>
+        <div className="shell">
+          <div className="row items-center justify-between" style={{ padding: "20px 0 12px" }}>
+            <div className="row gap-12 items-baseline">
+              <span className="eyebrow">{t.quiz.eyebrow}</span>
+              <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>·</span>
+              <span className="mono" style={{ fontSize: 12, color: "var(--ink)" }}>
+                {t.quiz.turn} {turn + 1} <span style={{ color: "var(--muted-2)" }}>{t.quiz.of}</span>
+              </span>
             </div>
-
-            <div className={styles.section}>
-              <label className={styles.label}>{t.quiz.recipient_label}</label>
-              <div className={styles.chipGrid}>
-                {RECIPIENTS.map(r => (
-                  <button key={r} className={`chip ${chips.recipients.includes(r) ? "selected" : ""}`} onClick={() => toggleRecipient(r)}>
-                    {(t.quiz.recipients as any)[r]}
-                  </button>
-                ))}
+            <div className="row gap-16 items-center">
+              <div className="col" style={{ alignItems: "flex-end" }}>
+                <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.quiz.confidence}</span>
+                <span className="serif" style={{ fontSize: 18, color: "var(--coral)" }}>{confidence.toFixed(2)}</span>
               </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => setPhase("onboarding")}>← {t.onboarding.back}</button>
             </div>
+          </div>
+          <div className="progress"><span style={{ width: `${((turn + 1) / 10) * 100}%` }}></span></div>
+        </div>
+      </div>
 
-            <div className={styles.section}>
-              <label className={styles.label}>{t.quiz.budget_label}</label>
-              <div className={styles.chipGrid}>
-                {BUDGETS.map(b => (
-                  <button key={b} className={`chip ${chips.budget === b ? "selected" : ""}`} onClick={() => setChips({ ...chips, budget: b })}>
-                    {(t.quiz.budgets as any)[b]}
-                  </button>
-                ))}
+      <div className="shell">
+        <div className="row gap-64 wrap" style={{ padding: "60px 0", alignItems: "flex-start" }}>
+          {/* Main question column */}
+          <div className="col gap-32" style={{ flex: "1.6" }}>
+            <div className="row items-baseline gap-12">
+              <span className="serif" style={{ fontSize: 56, color: "var(--coral)" }}>{String(turn + 1).padStart(2, "0")}</span>
+              <span className="eyebrow">{t.quiz.ai_question}</span>
+            </div>
+            <h1 key={turn} className="serif fade-up" style={{ fontSize: "clamp(40px, 5.5vw, 72px)", lineHeight: 1.05, letterSpacing: "-0.02em", maxWidth: 920 }}>
+              {current.q}
+            </h1>
+
+            {current.type === "text" && (
+              <div className="col gap-16" key={"text" + turn}>
+                <input ref={inputRef} className="input serif" style={{ fontSize: 28, paddingBottom: 14, fontStyle: "italic", color: "var(--ink)" }}
+                  placeholder={t.quiz.placeholder} value={answer} onChange={e => setAnswer(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") submit(); }} />
+                <div className="row wrap gap-8">
+                  {current.options.map((opt, i) => (
+                    <button key={i} className="chip" onClick={() => onPickOption(opt)}>{opt}</button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {error && <p className={styles.error}>{error}</p>}
-            <button className="btn btn-primary btn-lg" style={{ width: "100%" }} onClick={handleStart} disabled={!chips.recipients.length || !chips.budget}>
-              🚀 {t.quiz.start}
-            </button>
-          </div>
-        )}
-
-        {/* ── Loading Phase ── */}
-        {phase === "loading" && (
-          <div className={`card-glass animate-fade-in ${styles.card} ${styles.loadingCard}`}>
-            <div className="spinner" />
-            <p style={{ color: "var(--color-text-muted)" }}>{t.quiz.thinking}</p>
-          </div>
-        )}
-
-        {/* ── Quiz Phase ── */}
-        {phase === "quiz" && currentQuestion && (
-          <div className={`card-glass animate-scale-in ${styles.card}`}>
-            <div className={styles.progressHeader}>
-              <span className={styles.turnLabel}>Soru {session?.current_turn || 1} / maks. 10</span>
-              <span className={styles.confidenceBadge}>{Math.round((currentQuestion.confidence_score || 0) * 100)}% emin</span>
-            </div>
-            <div className="progress-bar">
-              <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
-            </div>
-
-            <div className={styles.questionArea}>
-              <div className={styles.aiAvatar}>🤖</div>
-              <p className={styles.questionText}>{currentQuestion.question}</p>
-            </div>
-
-            {currentQuestion.question_type === "text" ? (
-              <textarea
-                className="input textarea"
-                placeholder={t.quiz.your_answer}
-                value={answer}
-                onChange={e => setAnswer(e.target.value)}
-                rows={3}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && answer.trim()) { e.preventDefault(); handleSubmit(); } }}
-              />
-            ) : (
-              <div className={styles.chipGrid}>
-                {currentQuestion.options?.map(opt => (
-                  <button key={opt} className={`chip ${selectedOptions.includes(opt) ? "selected" : ""}`} onClick={() => toggleOption(opt)}>
-                    {opt}
+            {current.type === "single" && (
+              <div className="col gap-12" key={"single" + turn}>
+                {current.options.map((opt, i) => (
+                  <button key={i} onClick={() => onPickOption(opt)}
+                    className="row items-center justify-between"
+                    style={{ padding: "18px 24px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6, fontFamily: "inherit", fontSize: 18, color: "var(--ink)", cursor: "pointer", textAlign: "left", transition: "all 0.15s ease", width: "100%" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--ink)"; (e.currentTarget as HTMLElement).style.background = "var(--cream-2)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--rule)"; (e.currentTarget as HTMLElement).style.background = "var(--bone)"; }}>
+                    <span>{opt}</span>
+                    <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)" }}>{String.fromCharCode(65 + i)}</span>
                   </button>
                 ))}
               </div>
             )}
 
-            {error && <p className={styles.error}>{error}</p>}
+            {current.type === "multi" && (
+              <div className="col gap-16" key={"multi" + turn}>
+                <div className="row wrap gap-8">
+                  {current.options.map((opt, i) => (
+                    <button key={i} className={"chip" + (multi.includes(opt) ? " active" : "")} onClick={() => onPickOption(opt)}>{opt}</button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-            <button
-              className="btn btn-primary btn-lg"
-              style={{ width: "100%" }}
-              onClick={handleSubmit}
-              disabled={
-                (currentQuestion.question_type === "text" && !answer.trim()) ||
-                (currentQuestion.question_type !== "text" && !selectedOptions.length)
-              }
-            >
-              {t.quiz.next} →
-            </button>
+            <div className="row gap-12 items-center" style={{ marginTop: 16 }}>
+              <button className="btn btn-coral btn-lg" onClick={() => submit()}
+                disabled={(current.type === "multi" && !multi.length) || (current.type === "text" && !answer.trim()) || thinking}
+                style={{ opacity: thinking ? 0.5 : 1 }}>
+                {thinking ? <span className="dots"><span></span><span></span><span></span></span> : <>{t.quiz.submit} →</>}
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setTurn(t => t + 1)} disabled={thinking}>{t.quiz.skip}</button>
+              {current.type === "text" && <span className="mono" style={{ fontSize: 11, color: "var(--muted)", marginLeft: 12 }}>↵ ENTER</span>}
+            </div>
           </div>
-        )}
+
+          {/* Right column — AI reasoning */}
+          <div className="col gap-16" style={{ flex: 1, minWidth: 300, position: "sticky", top: 90 }}>
+            <div className="card" style={{ padding: 20 }}>
+              <div className="eyebrow" style={{ marginBottom: 10 }}>{t.quiz.reasoning}</div>
+              <p key={turn} className="fade-in" style={{ fontSize: 14, lineHeight: 1.55, color: "var(--ink-2)" }}>"{current.reason}"</p>
+              <hr className="rule-soft" style={{ margin: "16px 0" }} />
+              <div className="row gap-8 items-center">
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: thinking ? "var(--coral)" : "var(--sage)", display: "inline-block" }}></span>
+                <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)" }}>
+                  {thinking ? t.quiz.thinking : t.quiz.ai_ready}
+                </span>
+              </div>
+            </div>
+
+            {history.length > 0 && (
+              <div className="card" style={{ padding: 20 }}>
+                <div className="eyebrow" style={{ marginBottom: 12 }}>{t.quiz.so_far}</div>
+                <div className="col gap-12">
+                  {history.slice(-3).map((h, i) => (
+                    <div key={i} className="col gap-4">
+                      <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>Q{history.length - 2 + i}</span>
+                      <span style={{ fontSize: 13, color: "var(--ink-2)" }}>{h.q.length > 52 ? h.q.slice(0, 52) + "…" : h.q}</span>
+                      <span className="serif-italic" style={{ fontSize: 14, color: "var(--coral)" }}>"{h.a.length > 40 ? h.a.slice(0, 40) + "…" : h.a}"</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="row gap-8 items-center" style={{ padding: "0 4px" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }}></span>
+              <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>
+                {selectedRecipients.map(k => (t.recipients as Record<string, string>)[k]).join(", ")} · {selectedBudget ? (t.budget as Record<string, string>)[selectedBudget] : ""}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,137 +1,121 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { getSupabaseClient } from "@/lib/supabase";
-import { useAuthStore } from "@/store/authStore";
+import { useState, useMemo } from "react";
 import { useI18n } from "@/store/i18nStore";
-import type { CommunityPost } from "@/types";
-import styles from "./Community.module.css";
+import { COMMUNITY_FEED, TONE_BG, type CommunityPost } from "@/lib/data";
+import ImagePlaceholder from "@/components/ImagePlaceholder";
 
-const RECIPIENTS = ["sevgili", "anne", "baba", "arkadas", "kardes", "is_arkadasi", "cocuk", "diger"] as const;
-const PAGE_SIZE = 12;
+type WishlistItem = { name: string; store: string; tone: string; price: string; desc: string; note: string };
 
 export default function CommunityClient() {
-  const { t } = useI18n();
-  const { user } = useAuthStore();
-  const [posts, setPosts] = useState<CommunityPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { t, lang } = useI18n();
   const [filter, setFilter] = useState("all");
-  const [sort, setSort] = useState<"newest" | "popular">("newest");
-  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const [hasMore, setHasMore] = useState(true);
+  const [sort, setSort] = useState("new");
+  const [likes, setLikes] = useState<Record<string, boolean>>({});
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
 
-  const fetchPosts = useCallback(async (reset = false) => {
-    setLoading(true);
-    const supabase = getSupabaseClient();
-    let query = supabase
-      .from("community_posts")
-      .select("*, profiles(full_name, avatar_url)")
-      .range(reset ? 0 : posts.length, (reset ? 0 : posts.length) + PAGE_SIZE - 1);
+  const filterChips = [
+    { k: "all", label: t.community.all },
+    { k: "mom", label: (t.recipients as Record<string, string>)["mom"] },
+    { k: "partner", label: (t.recipients as Record<string, string>)["partner"] },
+    { k: "friend", label: (t.recipients as Record<string, string>)["friend"] },
+    { k: "dad", label: (t.recipients as Record<string, string>)["dad"] },
+    { k: "sibling", label: (t.recipients as Record<string, string>)["sibling"] },
+    { k: "coworker", label: (t.recipients as Record<string, string>)["coworker"] },
+    { k: "child", label: (t.recipients as Record<string, string>)["child"] },
+  ];
 
-    if (filter !== "all") query = query.ilike("recipient_label", `%${(t.quiz.recipients as any)[filter] || filter}%`);
-    query = sort === "popular" ? query.order("likes_count", { ascending: false }) : query.order("created_at", { ascending: false });
-
-    const { data } = await query;
-    if (data) {
-      setPosts(reset ? data : prev => [...prev, ...data]);
-      setHasMore(data.length === PAGE_SIZE);
+  const items = useMemo(() => {
+    let arr = [...COMMUNITY_FEED];
+    if (filter !== "all") {
+      const labelTr = (t.recipients as Record<string, string>)[filter] || "";
+      arr = arr.filter(p => (p.forTr + " " + p.forEn).toLowerCase().includes(labelTr.toLowerCase()) || (p.forTr + " " + p.forEn).toLowerCase().includes(filter));
     }
-    setLoading(false);
-  }, [filter, sort]);
+    if (sort === "top") arr.sort((a, b) => (b.likes + (likes[b.id] ? 1 : 0)) - (a.likes + (likes[a.id] ? 1 : 0)));
+    return arr;
+  }, [filter, sort, likes, lang, t]);
 
-  useEffect(() => { fetchPosts(true); }, [filter, sort]);
-
-  useEffect(() => {
-    if (!user) return;
-    const supabase = getSupabaseClient();
-    supabase.from("post_likes").select("post_id").eq("user_id", user.id).then(({ data }) => {
-      if (data) setLikedIds(new Set(data.map(d => d.post_id)));
-    });
-  }, [user]);
-
-  const handleLike = async (postId: string) => {
-    if (!user) return;
-    const supabase = getSupabaseClient();
-    const { data } = await supabase.functions.invoke("community-like", { body: { post_id: postId } });
-    if (data) {
-      setLikedIds(prev => { const n = new Set(prev); data.liked ? n.add(postId) : n.delete(postId); return n; });
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes_count: data.likes_count } : p));
+  const toggleLike = (id: string) => setLikes(l => ({ ...l, [id]: !l[id] }));
+  const addToWishlist = (p: CommunityPost) => {
+    if (!wishlist.some(w => w.name === p.productName)) {
+      setWishlist(w => [...w, { name: p.productName, store: p.store, tone: p.tone, price: "—", desc: lang === "tr" ? p.textTr : p.textEn, note: "" }]);
     }
-  };
-
-  const handleWishlist = async (post: CommunityPost) => {
-    if (!user) return;
-    const supabase = getSupabaseClient();
-    await supabase.from("wishlists").insert({ user_id: user.id, post_id: post.id, product_name: post.product_name, product_link: post.product_link, product_image: post.product_image });
   };
 
   return (
-    <div className={styles.page}>
-      <div className="container">
-        <div className={`${styles.header} animate-fade-in-up`}>
-          <h1 className="gradient-text">{t.community.title}</h1>
-          <p>{t.community.subtitle}</p>
-        </div>
+    <div className="fade-in">
+      <div className="shell">
+        <section style={{ padding: "56px 0 32px" }}>
+          <div className="col gap-16" style={{ maxWidth: 760 }}>
+            <div className="eyebrow">{t.community.eyebrow}</div>
+            <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
+              {t.community.title_a}<br />
+              <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.community.title_b}</span>
+            </h1>
+            <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.community.sub}</p>
+          </div>
+        </section>
 
-        <div className={`${styles.filters} animate-fade-in-up`}>
-          <div className={styles.filterChips}>
-            <button className={`chip ${filter === "all" ? "selected" : ""}`} onClick={() => setFilter("all")}>{t.community.filter_all}</button>
-            {RECIPIENTS.map(r => (
-              <button key={r} className={`chip ${filter === r ? "selected" : ""}`} onClick={() => setFilter(r)}>
-                {(t.quiz.recipients as any)[r]}
-              </button>
-            ))}
-          </div>
-          <div className={styles.sortBtns}>
-            <button className={`btn btn-sm ${sort === "newest" ? "btn-secondary" : "btn-ghost"}`} onClick={() => setSort("newest")}>{t.community.sort_newest}</button>
-            <button className={`btn btn-sm ${sort === "popular" ? "btn-secondary" : "btn-ghost"}`} onClick={() => setSort("popular")}>{t.community.sort_popular}</button>
-          </div>
-        </div>
+        <hr className="rule" />
 
-        {loading && posts.length === 0 ? (
-          <div className="masonry-grid">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="skeleton" style={{ height: `${180 + (i * 30)}px` }} />
-            ))}
+        <section style={{ padding: "24px 0" }}>
+          <div className="row justify-between items-center wrap gap-16">
+            <div className="row items-center gap-8 wrap">
+              <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)", textTransform: "uppercase" }}>{t.community.filter}</span>
+              {filterChips.map(c => (
+                <button key={c.k} className={"chip" + (filter === c.k ? " active" : "")} onClick={() => setFilter(c.k)} style={{ padding: "6px 14px", fontSize: 13 }}>
+                  {c.label}
+                </button>
+              ))}
+            </div>
+            <div className="row items-center gap-8">
+              <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)", textTransform: "uppercase" }}>{t.community.sort}</span>
+              <button className={"chip" + (sort === "new" ? " active" : "")} onClick={() => setSort("new")} style={{ padding: "6px 14px", fontSize: 13 }}>{t.community.sort_new}</button>
+              <button className={"chip" + (sort === "top" ? " active" : "")} onClick={() => setSort("top")} style={{ padding: "6px 14px", fontSize: 13 }}>{t.community.sort_top}</button>
+            </div>
           </div>
-        ) : (
-          <div className="masonry-grid">
-            {posts.map(post => (
-              <div key={post.id} className={`card animate-fade-in-up ${styles.postCard}`}>
-                {post.product_image && (
-                  <div className={styles.imageWrap}>
-                    <img src={post.product_image} alt={post.product_name} className={styles.image} />
-                  </div>
-                )}
-                <div className={styles.cardContent}>
-                  <div className={styles.topMeta}>
-                    {post.recipient_label && <span className="badge badge-primary">{post.recipient_label}</span>}
-                    <span className={styles.date}>{new Date(post.created_at).toLocaleDateString("tr-TR")}</span>
-                  </div>
-                  <h3 className={styles.productName}>{post.product_name}</h3>
-                  {post.feedback_text && <p className={styles.feedback}>"{post.feedback_text}"</p>}
-                  <div className={styles.footer}>
-                    <span className={styles.author}>— {post.is_anonymous ? t.common.anonymous : (post.profiles as any)?.full_name || t.common.anonymous}</span>
-                    <div className={styles.postActions}>
-                      <button className={`${styles.likeBtn} ${likedIds.has(post.id) ? styles.liked : ""}`} onClick={() => handleLike(post.id)}>
-                        {likedIds.has(post.id) ? "❤️" : "🤍"} {post.likes_count}
-                      </button>
-                      <button className="btn btn-ghost btn-sm" onClick={() => handleWishlist(post)} style={{ fontSize: "0.75rem" }}>
-                        + {t.community.add_wishlist}
-                      </button>
+        </section>
+
+        <hr className="rule-soft" />
+
+        <section style={{ padding: "32px 0 80px" }}>
+          <div style={{ columnCount: 3, columnGap: 20 }}>
+            {items.map((p, i) => {
+              const liked = !!likes[p.id];
+              const totalLikes = p.likes + (liked ? 1 : 0);
+              const saved = wishlist.some(w => w.name === p.productName);
+              return (
+                <div key={p.id} className="card fade-up" style={{ display: "inline-block", width: "100%", marginBottom: 20, breakInside: "avoid", animationDelay: `${(i % 6) * 0.06}s` }}>
+                  <ImagePlaceholder tone={p.tone} label={p.productName.toUpperCase()} h={p.h} />
+                  <div className="col gap-12" style={{ padding: "16px 18px 18px" }}>
+                    <div className="row gap-8 items-center wrap">
+                      <span className="tag tag-rose">{lang === "tr" ? p.forTr : p.forEn}</span>
+                      <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>· {p.store.toUpperCase()}</span>
+                    </div>
+                    <p className="serif-italic" style={{ fontSize: 18, lineHeight: 1.35, color: "var(--ink)", margin: 0 }}>"{lang === "tr" ? p.textTr : p.textEn}"</p>
+                    <hr className="rule-soft" />
+                    <div className="row justify-between items-center">
+                      <div className="row gap-8 items-center">
+                        <span style={{ width: 24, height: 24, borderRadius: "50%", background: p.anon ? "var(--muted-2)" : "var(--ink)", color: "var(--cream)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontFamily: "JetBrains Mono" }}>
+                          {p.anon ? "·" : p.author[0]}
+                        </span>
+                        <span style={{ fontSize: 13, color: "var(--ink-2)" }}>{p.anon ? t.community.anon : p.author}</span>
+                      </div>
+                      <div className="row gap-4 items-center">
+                        <button onClick={() => toggleLike(p.id)} className="btn btn-ghost btn-sm" style={{ padding: "6px 10px", border: "none", color: liked ? "var(--coral)" : "var(--muted)" }}>
+                          {liked ? "♥" : "♡"} <span className="mono" style={{ fontSize: 11 }}>{totalLikes}</span>
+                        </button>
+                        <button onClick={() => addToWishlist(p)} className="btn btn-ghost btn-sm" style={{ padding: "6px 10px", border: "none", color: saved ? "var(--sage)" : "var(--muted)" }}>
+                          {saved ? "✓" : "+"} <span style={{ fontSize: 11 }}>{saved ? t.community.saved : t.community.add_wish}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        )}
-
-        {hasMore && !loading && (
-          <div style={{ textAlign: "center", marginTop: 32 }}>
-            <button className="btn btn-secondary" onClick={() => fetchPosts(false)}>Daha Fazla Göster</button>
-          </div>
-        )}
+        </section>
       </div>
     </div>
   );
