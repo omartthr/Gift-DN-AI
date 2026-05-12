@@ -3,18 +3,82 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
+import { useQuizStore } from "@/store/quizStore";
 import { GIFT_RESULTS, type GiftResult } from "@/lib/data";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import GradientText from "@/components/GradientText";
+import type { GiftSuggestion } from "@/types";
 
-type WishlistItem = { name: string; store: string; tone: string; price: string; desc: string; note: string };
+type WishlistItem = { name: string; store: string; tone: string; price: string; desc: string; note: string; link: string; image: string };
+
+const TONES = ["sage", "rose", "clay", "sky", "cream", "coral"];
+
+type DisplayGift = {
+  rank: number;
+  name: string;
+  tone: string;
+  desc: string;
+  why: string;
+  price: string;
+  store: string;
+  stock: string;
+  link: string;
+  image: string;
+  rating?: number;
+  sourceIcon?: string;
+  thumbnails: string[];
+};
+
+function mapSuggestion(g: GiftSuggestion, i: number, lang: string): DisplayGift {
+  const inStock = lang === "tr" ? "Stokta" : "In stock";
+  const mainImage = g.product_image || "";
+  const extras = (g.thumbnails || []).filter((t) => t && t !== mainImage);
+  const thumbnails = mainImage ? [mainImage, ...extras] : extras;
+  return {
+    rank: g.rank ?? i + 1,
+    name: g.product_name || "—",
+    tone: TONES[i % TONES.length],
+    desc: g.product_description || "",
+    why: g.reasoning || "",
+    price: g.current_price || "",
+    store: g.source_store || "",
+    stock: inStock,
+    link: g.product_link || "",
+    image: mainImage,
+    rating: typeof g.rating === "number" ? g.rating : undefined,
+    sourceIcon: g.source_icon || "",
+    thumbnails,
+  };
+}
+
+function mapMock(g: GiftResult): DisplayGift {
+  return {
+    rank: g.rank,
+    name: g.name,
+    tone: g.tone,
+    desc: g.desc,
+    why: g.why,
+    price: g.price,
+    store: g.store,
+    stock: g.stock,
+    link: "",
+    image: "",
+    thumbnails: [],
+  };
+}
 
 export default function ResultsClient() {
   const { t, lang } = useI18n();
   const router = useRouter();
-  const gifts: GiftResult[] = GIFT_RESULTS[lang] || GIFT_RESULTS["tr"];
+  const liveGifts = useQuizStore(s => s.gifts);
+  const reset = useQuizStore(s => s.reset);
+
+  const gifts: DisplayGift[] = liveGifts.length
+    ? [...liveGifts].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0)).map((g, i) => mapSuggestion(g, i, lang))
+    : (GIFT_RESULTS[lang] || GIFT_RESULTS["tr"]).map(mapMock);
+
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
-  const [shareGift, setShareGift] = useState<GiftResult | null>(null);
+  const [shareGift, setShareGift] = useState<DisplayGift | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -22,9 +86,9 @@ export default function ResultsClient() {
     setTimeout(() => setToast(null), 2400);
   };
 
-  const addToWishlist = (g: GiftResult) => {
+  const addToWishlist = (g: DisplayGift) => {
     if (!wishlist.some(w => w.name === g.name)) {
-      setWishlist(w => [...w, { name: g.name, store: g.store, tone: g.tone, price: g.price, desc: g.desc, note: "" }]);
+      setWishlist(w => [...w, { name: g.name, store: g.store, tone: g.tone, price: g.price, desc: g.desc, note: "", link: g.link, image: g.image }]);
       showToast(lang === "tr" ? "İstek listesine eklendi" : "Added to your wishlist");
     }
   };
@@ -44,7 +108,7 @@ export default function ResultsClient() {
               </h1>
               <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.results.sub}</p>
             </div>
-            <button className="btn btn-bone btn-sm" onClick={() => router.push("/quiz")}>↻ {t.results.restart}</button>
+            <button className="btn btn-bone btn-sm" onClick={() => { reset(); router.push("/quiz"); }}>↻ {t.results.restart}</button>
           </div>
         </section>
 
@@ -58,7 +122,7 @@ export default function ResultsClient() {
                 <div key={i} className="fade-up" style={{ animationDelay: `${i * 0.12}s` }}>
                   <div className="row gap-32 wrap" style={{ alignItems: "stretch" }}>
                     <div style={{ flex: "0 0 380px" }}>
-                      <ImagePlaceholder tone={g.tone} label={g.name.toUpperCase()} h={380} />
+                      <GiftGallery gift={g} />
                     </div>
                     <div className="col gap-16" style={{ flex: 1, padding: "4px 0" }}>
                       <div className="row gap-12 items-baseline">
@@ -66,6 +130,12 @@ export default function ResultsClient() {
                         <span className="eyebrow">{t.results.rank} · {g.rank}/3</span>
                       </div>
                       <h2 className="serif" style={{ fontSize: 42, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{g.name}</h2>
+                      {typeof g.rating === "number" && (
+                        <div className="row gap-6 items-center" style={{ marginTop: -4 }}>
+                          <StarRating value={g.rating} />
+                          <span className="mono" style={{ fontSize: 13, color: "var(--ink-2)" }}>{g.rating.toFixed(1)}</span>
+                        </div>
+                      )}
                       <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.55, maxWidth: 560 }}>{g.desc}</p>
 
                       <div className="card" style={{ padding: 18, background: "var(--cream-2)", border: "1px solid var(--rule)", maxWidth: 580 }}>
@@ -80,7 +150,17 @@ export default function ResultsClient() {
                         </div>
                         <div className="col gap-4">
                           <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.results.from.toUpperCase()}</span>
-                          <span style={{ fontSize: 16 }}>{g.store}</span>
+                          <span className="row gap-6 items-center" style={{ fontSize: 16 }}>
+                            {g.sourceIcon && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={g.sourceIcon}
+                                alt={g.store}
+                                style={{ width: 18, height: 18, borderRadius: 4, objectFit: "contain", background: "var(--bone)" }}
+                              />
+                            )}
+                            <span>{g.store}</span>
+                          </span>
                         </div>
                         <div className="col gap-4">
                           <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.results.status}</span>
@@ -89,7 +169,24 @@ export default function ResultsClient() {
                       </div>
 
                       <div className="row gap-8 items-center wrap" style={{ marginTop: 16 }}>
-                        <button className="btn btn-coral" onClick={() => window.open("about:blank", "_blank")}>{t.results.view} ↗</button>
+                        {g.link ? (
+                          <a
+                            className="btn btn-coral"
+                            href={g.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {t.results.view} ↗
+                          </a>
+                        ) : (
+                          <button
+                            className="btn btn-coral"
+                            disabled
+                            style={{ opacity: 0.5, cursor: "not-allowed" }}
+                          >
+                            {t.results.view} ↗
+                          </button>
+                        )}
                         <button className={"btn " + (saved ? "btn-bone" : "btn-ghost")} onClick={() => addToWishlist(g)}>
                           {saved ? "✓ " + t.results.saved : "♡ " + t.results.wishlist}
                         </button>
@@ -120,7 +217,67 @@ export default function ResultsClient() {
   );
 }
 
-function ShareModal({ gift, onClose, onPost }: { gift: GiftResult; onClose: () => void; onPost: () => void }) {
+function GiftGallery({ gift }: { gift: DisplayGift }) {
+  const [active, setActive] = useState(gift.image);
+  const thumbs = gift.thumbnails.length > 1 ? gift.thumbnails.slice(0, 5) : [];
+  const main = active || gift.image;
+
+  return (
+    <div className="col gap-8">
+      {main ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={main}
+          alt={gift.name}
+          style={{ width: "100%", height: 380, objectFit: "cover", borderRadius: 8, background: "var(--bone)" }}
+        />
+      ) : (
+        <ImagePlaceholder tone={gift.tone} label={gift.name.toUpperCase()} h={380} />
+      )}
+      {thumbs.length > 0 && (
+        <div className="row gap-8 wrap">
+          {thumbs.map((src, idx) => {
+            const isActive = src === main;
+            return (
+              <button
+                key={`${src}-${idx}`}
+                onClick={() => setActive(src)}
+                aria-label={`${gift.name} ${idx + 1}`}
+                style={{
+                  width: 60,
+                  height: 60,
+                  padding: 0,
+                  border: isActive ? "2px solid var(--coral)" : "1px solid var(--rule)",
+                  borderRadius: 6,
+                  overflow: "hidden",
+                  background: "var(--bone)",
+                  cursor: "pointer",
+                  opacity: isActive ? 1 : 0.78,
+                  transition: "opacity 0.15s, border-color 0.15s",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StarRating({ value }: { value: number }) {
+  const pct = Math.round((value / 5) * 100);
+  return (
+    <span style={{ position: "relative", display: "inline-block", fontSize: 14, letterSpacing: 1, lineHeight: 1 }} aria-label={`${value} / 5`}>
+      <span style={{ color: "#D4C5B0" }}>★★★★★</span>
+      <span style={{ position: "absolute", top: 0, left: 0, overflow: "hidden", width: `${pct}%`, color: "#F5A524", whiteSpace: "nowrap" }}>★★★★★</span>
+    </span>
+  );
+}
+
+function ShareModal({ gift, onClose, onPost }: { gift: DisplayGift; onClose: () => void; onPost: () => void }) {
   const { t, lang } = useI18n();
   const [recipient, setRecipient] = useState(lang === "tr" ? "Annem için" : "For my mom");
   const [feedback, setFeedback] = useState("");

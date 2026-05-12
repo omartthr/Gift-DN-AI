@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { useI18n } from "@/store/i18nStore";
 import { useAuthStore } from "@/store/authStore";
 import GradientText from "@/components/GradientText";
-import ChatPanel from "./ChatPanel";
 
 function Icon({ name }: { name: string }) {
   const props = { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -32,8 +31,6 @@ export default function AppShell({ children }: AppShellProps) {
   useEffect(() => {
     initLang();
   }, [initLang]);
-
-  const isHome = pathname === "/";
 
   const items = [
     { k: "/",          icon: "home",      label: t.nav.home,      kbd: "H" },
@@ -101,7 +98,7 @@ export default function AppShell({ children }: AppShellProps) {
       </div>
 
       {/* Main content */}
-      <div className={"layout-with-rail" + (isHome ? " with-chat" : "")}>
+      <div className="layout-with-rail">
         {children}
 
         {/* Footer */}
@@ -109,7 +106,7 @@ export default function AppShell({ children }: AppShellProps) {
           <div className="footer">
             <div className="col gap-8">
               <div className="eyebrow">GIFT DN-AI · {lang === "tr" ? "BİR YAPAY ZEKA HEDİYE EDİTÖRÜ" : "AN AI GIFT EDITOR"}</div>
-              <div className="serif" style={{ fontSize: 18, color: "var(--ink)" }}>{lang === "tr" ? "Daha iyi hediye, daha az yorgunluk." : "Better gifts, less fatigue."}</div>
+              <div className="serif" style={{ fontSize: 18, color: "var(--ink)" }}>{lang === "tr" ? "Hediye arama. Hikayesini anlat, biz bulalım." : "Don't search for a gift. Tell the story, we'll find it."}</div>
             </div>
             <div className="col gap-4 mono" style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", textAlign: "right" }}>
               <span>v0.4 · prototype</span>
@@ -118,9 +115,6 @@ export default function AppShell({ children }: AppShellProps) {
           </div>
         </div>
       </div>
-
-      {/* Chat Panel — only on home */}
-      {isHome && <ChatPanel />}
 
       {/* Auth Modal */}
       {authMode && <AuthModalInline initialMode={authMode} onClose={() => setAuthMode(false)} />}

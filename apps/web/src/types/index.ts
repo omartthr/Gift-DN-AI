@@ -49,6 +49,9 @@ export interface GiftSuggestion {
   product_image: string;
   current_price: string;
   source_store: string;
+  source_icon?: string;
+  rating?: number;
+  thumbnails?: string[];
   rank: number;
   created_at: string;
 }

@@ -59,11 +59,9 @@ export default function HomeClient() {
           <p style={{ fontSize: 17, lineHeight: 1.55, color: "var(--ink-2)", maxWidth: 580, marginTop: 24 }}>{t.landing.sub}</p>
 
           <div className="row gap-12 items-center wrap" style={{ marginTop: 28 }}>
-            <GradientText className="mono" animationSpeed={3} style={{ fontSize: 11, letterSpacing: "0.1em" }} colors={["#F95738", "#FF9F1C", "#F95738"]}>→</GradientText>
-            <span style={{ fontSize: 14, color: "var(--ink-2)" }}>
-              {lang === "tr" ? "Sağdaki sohbet kutusundan başla." : "Start in the chat box on the right."}
-            </span>
-            <span style={{ width: 24, height: 1, background: "var(--rule)" }}></span>
+            <Link href="/quiz" className="btn btn-coral btn-lg">
+              {t.landing.cta_start} →
+            </Link>
             <Link href="/community" className="btn btn-ghost btn-sm">
               {t.landing.cta_explore} →
             </Link>

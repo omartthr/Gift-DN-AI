@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { QuizSession, GiftSuggestion, InitialChips, NextQuestionResponse } from "@/types";
@@ -41,7 +42,7 @@ interface QuizState {
   reset: () => void;
 }
 
-export const useQuizStore = create<QuizState>((set, get) => ({
+export const useQuizStore = create<QuizState>()(persist((set, get) => ({
   session: null,
   chips: { recipients: [], budget: "" },
   currentQuestion: null,
@@ -133,4 +134,8 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     phase: "chips",
     error: null,
   }),
+}), {
+  name: "gift-dn-ai:quiz",
+  storage: createJSONStorage(() => localStorage),
+  partialize: (state) => ({ session: state.session, gifts: state.gifts, chips: state.chips }),
 }));

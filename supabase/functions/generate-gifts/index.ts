@@ -37,7 +37,22 @@ async function callGemini(prompt: string): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }
 
-async function searchSerpAPI(query: string, language: string) {
+type BudgetRange = { min: number; max: number };
+
+function parseBudget(label: string): BudgetRange {
+  if (!label) return { min: 0, max: Number.POSITIVE_INFINITY };
+  const cleaned = label.replace(/[^\d\-–+]/g, "");
+  if (cleaned.includes("+")) {
+    const min = parseInt(cleaned.replace("+", ""), 10);
+    return { min: isNaN(min) ? 0 : min, max: Number.POSITIVE_INFINITY };
+  }
+  const parts = cleaned.split(/[–\-]/).map((s) => parseInt(s, 10));
+  const min = isNaN(parts[0]) ? 0 : parts[0];
+  const max = isNaN(parts[1]) ? Number.POSITIVE_INFINITY : parts[1];
+  return { min, max };
+}
+
+async function searchSerpAPI(query: string, language: string, budget: BudgetRange) {
   const serpKey = Deno.env.get("SERP_API_KEY");
   if (!serpKey) {
     // SerpAPI key yoksa mock sonuç döndür (geliştirme için)
@@ -50,8 +65,16 @@ async function searchSerpAPI(query: string, language: string) {
     gl: "tr",
     hl: language,
     api_key: serpKey,
-    num: "3",
+    num: "20",
   });
+
+  // SerpAPI fiyat filtresi (Google Shopping)
+  if (budget.min > 0 || budget.max !== Number.POSITIVE_INFINITY) {
+    const tbsParts = ["mr:1", "price:1"];
+    if (budget.min > 0) tbsParts.push(`ppr_min:${budget.min}`);
+    if (budget.max !== Number.POSITIVE_INFINITY) tbsParts.push(`ppr_max:${budget.max}`);
+    params.set("tbs", tbsParts.join(","));
+  }
 
   try {
     const res = await fetch(`https://serpapi.com/search.json?${params}`);
@@ -90,9 +113,22 @@ serve(async (req) => {
       )
       .join("\n");
 
+    const budget = parseBudget(chips.budget || "");
+    const budgetText = chips.budget || "belirtilmedi";
+    const budgetConstraint = budget.max === Number.POSITIVE_INFINITY
+      ? `En az ${budget.min} TL`
+      : `${budget.min} TL ile ${budget.max} TL arasında`;
+
     const giftPrompt = `Bu konuşmaya dayanarak tam olarak 3 hediye öner.
-Alıcı: ${JSON.stringify(chips.recipients || [])}, Bütçe: ${chips.budget || "belirtilmedi"}
+Alıcı: ${JSON.stringify(chips.recipients || [])}
+Bütçe: ${budgetText}
 Dil: ${session.language}
+
+KATI KISITLAR:
+- Önerdiğin 3 ürünün PERAKENDE FİYATI mutlaka ${budgetConstraint} olmalı.
+- Bütçe aralığının dışında kalacak ürünler ÖNERME (lüks, premium, koleksiyon edisyon vb.).
+- "search_query" alanı Türkiye'de bu bütçe ile gerçekten bulunabilecek ürünleri hedeflemeli; gerekirse "uygun fiyatlı", "ekonomik" gibi modifier kullan.
+- Ürün adları aşırı niş veya sadece üst segmentte bulunan markalar olmasın.
 
 Konuşma:
 ${historyText}
@@ -131,29 +167,54 @@ YALNIZCA aşağıdaki yapıda geçerli bir JSON nesnesi döndür (dizi "gifts" k
     // Her hediye için SerpAPI çağrısı
     const enrichedGifts = await Promise.all(
       gifts.map(async (gift: any) => {
-        const serpResults = await searchSerpAPI(gift.search_query, session.language);
-        const top = serpResults[0] || {};
+        const serpResults = await searchSerpAPI(gift.search_query, session.language, budget);
 
-        const suggestion = {
+        // Bütçe aralığına düşen ilk sonucu seç; yoksa aralığa en yakın olanı al
+        const inRange = serpResults.filter((r: any) => {
+          const p = typeof r.extracted_price === "number" ? r.extracted_price : NaN;
+          return !isNaN(p) && p >= budget.min && p <= budget.max;
+        });
+        const fallback = [...serpResults]
+          .filter((r: any) => typeof r.extracted_price === "number")
+          .sort((a: any, b: any) => {
+            const dist = (p: number) =>
+              p < budget.min ? budget.min - p : p > budget.max ? p - budget.max : 0;
+            return dist(a.extracted_price) - dist(b.extracted_price);
+          });
+        const top = inRange[0] || fallback[0] || serpResults[0] || {};
+
+        const thumbnails = Array.isArray(top.thumbnails)
+          ? top.thumbnails.filter((t: unknown): t is string => typeof t === "string")
+          : [];
+        const rating = typeof top.rating === "number" ? top.rating : undefined;
+        const sourceIcon = typeof top.source_icon === "string" ? top.source_icon : "";
+
+        const dbRow = {
           session_id,
           product_name: top.title || gift.product_name,
           product_description: gift.description,
           reasoning: gift.reasoning,
-          serp_results: serpResults.slice(0, 3),
-          product_link: top.link || "",
+          serp_results: (inRange.length ? inRange : serpResults).slice(0, 3),
+          product_link: top.product_link || top.link || "",
           product_image: top.thumbnail || "",
           current_price: top.price || "",
           source_store: top.source || "",
           rank: gift.rank,
         };
 
+        const extras = {
+          source_icon: sourceIcon,
+          rating,
+          thumbnails,
+        };
+
         const { data: saved } = await supabase
           .from("gift_suggestions")
-          .insert(suggestion)
+          .insert(dbRow)
           .select()
           .single();
 
-        return saved || { ...suggestion, id: crypto.randomUUID() };
+        return { ...(saved || { ...dbRow, id: crypto.randomUUID() }), ...extras };
       })
     );
 

@@ -21,20 +21,23 @@ function OnboardingScreen() {
 
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>(chips.recipients || []);
   const [selectedBudget, setSelectedBudget] = useState(chips.budget || "");
+  const [customMin, setCustomMin] = useState("");
+  const [customMax, setCustomMax] = useState("");
   const [starting, setStarting] = useState(false);
 
-  const canContinue = selectedRecipients.length > 0 && !!selectedBudget;
+  const isCustomBudget = selectedBudget === "b_custom";
+  const customBudgetValid = isCustomBudget ? (!!customMin && !!customMax && Number(customMin) < Number(customMax)) : true;
+  const canContinue = selectedRecipients.length > 0 && !!selectedBudget && customBudgetValid;
 
-  const toggleRecipient = (k: string) => {
-    setSelectedRecipients(cur =>
-      cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k]
-    );
+  const selectRecipient = (k: string) => {
+    setSelectedRecipients([k]);
   };
 
   const handleStart = async () => {
     if (!canContinue) return;
 
-    const newChips = { recipients: selectedRecipients, budget: selectedBudget };
+    const budgetValue = isCustomBudget ? `${customMin}–${customMax} TL` : selectedBudget;
+    const newChips = { recipients: selectedRecipients, budget: budgetValue };
     setChips(newChips);
 
     if (!user) {
@@ -73,7 +76,7 @@ function OnboardingScreen() {
                     <button
                       key={k}
                       className={"chip" + (selectedRecipients.includes(k) ? " active" : "")}
-                      onClick={() => toggleRecipient(k)}
+                      onClick={() => selectRecipient(k)}
                     >
                       {(t.recipients as Record<string, string>)[k]}
                     </button>
@@ -97,7 +100,37 @@ function OnboardingScreen() {
                       {(t.budget as Record<string, string>)[k]}
                     </button>
                   ))}
+                  <button
+                    className={"chip coral" + (isCustomBudget ? " active" : "")}
+                    onClick={() => setSelectedBudget("b_custom")}
+                  >
+                    {(t.onboarding as Record<string, string>).budget_custom}
+                  </button>
                 </div>
+                {isCustomBudget && (
+                  <div className="row gap-8 items-center" style={{ marginTop: 4 }}>
+                    <input
+                      type="number"
+                      className="input"
+                      placeholder={(t.onboarding as Record<string, string>).budget_min}
+                      value={customMin}
+                      onChange={e => setCustomMin(e.target.value)}
+                      style={{ width: 120, fontSize: 15, padding: "8px 12px" }}
+                      min={0}
+                    />
+                    <span style={{ color: "var(--muted)", fontSize: 14 }}>–</span>
+                    <input
+                      type="number"
+                      className="input"
+                      placeholder={(t.onboarding as Record<string, string>).budget_max}
+                      value={customMax}
+                      onChange={e => setCustomMax(e.target.value)}
+                      style={{ width: 120, fontSize: 15, padding: "8px 12px" }}
+                      min={0}
+                    />
+                    <span style={{ color: "var(--muted)", fontSize: 13 }}>₺</span>
+                  </div>
+                )}
               </div>
 
               {error && (
@@ -141,7 +174,11 @@ function OnboardingScreen() {
                   <div>
                     <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>{t.onboarding.budget}</div>
                     <div className="serif" style={{ fontSize: 22, lineHeight: 1.15, minHeight: 28 }}>
-                      {selectedBudget ? (t.budget as Record<string, string>)[selectedBudget] : <span style={{ color: "var(--muted-2)" }}>—</span>}
+                      {isCustomBudget
+                        ? (customMin && customMax ? `${customMin} – ${customMax} ₺` : <span style={{ color: "var(--muted-2)" }}>—</span>)
+                        : selectedBudget
+                          ? (t.budget as Record<string, string>)[selectedBudget]
+                          : <span style={{ color: "var(--muted-2)" }}>—</span>}
                     </div>
                   </div>
                   <hr className="rule-soft" />
