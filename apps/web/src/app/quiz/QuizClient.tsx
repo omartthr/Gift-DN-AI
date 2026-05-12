@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
 import { useQuizStore } from "@/store/quizStore";
 import { useAuthStore } from "@/store/authStore";
+import { QUIZ_BANK, type QuizQuestion } from "@/lib/data";
+import GradientText from "@/components/GradientText";
 
 // ─── Chip seçimi: Onboarding ───────────────────────────────────────────────
 
@@ -279,7 +281,7 @@ function QuizScreen() {
             <div className="row gap-16 items-center">
               <div className="col" style={{ alignItems: "flex-end" }}>
                 <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.quiz.confidence}</span>
-                <span className="serif" style={{ fontSize: 18, color: "var(--coral)" }}>{confidencePct}%</span>
+                <GradientText className="serif" animationSpeed={3} style={{ fontSize: 18 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{confidence.toFixed(2)}</GradientText>
               </div>
             </div>
           </div>
@@ -294,9 +296,7 @@ function QuizScreen() {
           <div className="col gap-32" style={{ flex: "1.6" }}>
             {/* Soru numarası + eyebrow */}
             <div className="row items-baseline gap-12">
-              <span className="serif" style={{ fontSize: 56, color: "var(--coral)", lineHeight: 1 }}>
-                {String(turn).padStart(2, "0")}
-              </span>
+              <GradientText className="serif" animationSpeed={3} style={{ fontSize: 56 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{String(turn + 1).padStart(2, "0")}</GradientText>
               <span className="eyebrow">{t.quiz.ai_question}</span>
             </div>
 

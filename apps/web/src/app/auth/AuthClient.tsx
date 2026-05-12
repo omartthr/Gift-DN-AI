@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
 import { useAuthStore } from "@/store/authStore";
+import GradientText from "@/components/GradientText";
 
 export default function AuthClient() {
   const { t, lang } = useI18n();
@@ -31,7 +32,7 @@ export default function AuthClient() {
           <div className="eyebrow">GIFT · DN-AI</div>
           <h1 className="serif" style={{ fontSize: 44, lineHeight: 1.05, letterSpacing: "-0.02em" }}>
             {t.auth.title_a}<br />
-            <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.auth.title_b}</span>
+            <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.auth.title_b}</GradientText>
           </h1>
           <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>{t.auth.sub}</p>
 
@@ -56,10 +57,9 @@ export default function AuthClient() {
 
           <div className="row gap-8" style={{ marginTop: 8, fontSize: 13, color: "var(--muted)" }}>
             <span>{t.auth.noaccount}</span>
-            <span style={{ color: "var(--coral)", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}
-              onClick={() => setIsLogin(!isLogin)}>
+            <GradientText onClick={() => setIsLogin(!isLogin)} animationSpeed={3} style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>
               {t.auth.signup}
-            </span>
+            </GradientText>
           </div>
         </div>
       </div>

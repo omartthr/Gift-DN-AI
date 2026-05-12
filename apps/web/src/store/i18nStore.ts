@@ -256,13 +256,22 @@ interface I18nStore {
   lang: Lang;
   t: Translations;
   setLang: (lang: Lang) => void;
+  initLang: () => void;
 }
 
 export const useI18n = create<I18nStore>((set) => ({
-  lang: (typeof window !== "undefined" ? (localStorage.getItem("gdai_lang") as Lang) : null) || "tr",
+  lang: "tr",
   t: translations.tr,
   setLang: (lang) => {
     if (typeof window !== "undefined") localStorage.setItem("gdai_lang", lang);
     set({ lang, t: translations[lang] });
   },
+  initLang: () => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("gdai_lang") as Lang;
+      if (stored === "en" || stored === "tr") {
+        set({ lang: stored, t: translations[stored] });
+      }
+    }
+  }
 }));

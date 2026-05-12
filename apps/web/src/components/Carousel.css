@@ -1,0 +1,123 @@
+.carousel-container {
+  position: relative;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.carousel-track {
+  display: flex;
+}
+
+.carousel-item {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background-color: var(--bone);
+  overflow: hidden;
+  cursor: grab;
+}
+
+.carousel-item:active {
+  cursor: grabbing;
+}
+
+.carousel-container.round {
+  border: 1px solid var(--rule);
+}
+
+.carousel-item.round {
+  background-color: var(--bone);
+  position: relative;
+  bottom: 0.1em;
+  border: 1px solid var(--rule);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.carousel-item-header.round {
+  padding: 0;
+  margin: 0;
+}
+
+.carousel-indicators-container.round {
+  position: absolute;
+  z-index: 2;
+  bottom: 3em;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.carousel-indicator.active {
+  background-color: var(--coral);
+}
+
+.carousel-indicator.inactive {
+  background-color: var(--rule);
+}
+
+.carousel-item-header {
+  margin-bottom: 16px;
+  padding: 20px;
+  padding-top: 20px;
+}
+
+.carousel-icon-container {
+  display: flex;
+  height: 28px;
+  width: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #fff;
+}
+
+.carousel-icon {
+  height: 16px;
+  width: 16px;
+  color: #120F17;
+}
+
+.carousel-item-content {
+  padding: 20px;
+  padding-bottom: 20px;
+}
+
+.carousel-item-title {
+  margin-bottom: 4px;
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.carousel-item-description {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.carousel-indicators-container {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.carousel-indicators {
+  margin-top: 24px;
+  display: flex;
+  gap: 8px;
+}
+
+.carousel-indicator {
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 150ms;
+}

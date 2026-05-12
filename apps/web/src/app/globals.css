@@ -25,10 +25,10 @@ html, body {
   padding: 0;
   background: var(--cream);
   color: var(--ink);
-  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 15px;
   line-height: 1.55;
-  font-feature-settings: "ss01", "ss03", "cv11";
+  font-feature-settings: "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -39,23 +39,21 @@ html, body {
 
 /* ——— typography helpers ——— */
 .serif {
-  font-family: "Newsreader", "Source Serif 4", Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  font-feature-settings: "ss01", "ss02";
+  font-family: "Outfit", -apple-system, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 .serif-italic {
-  font-family: "Newsreader", Georgia, serif;
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-family: "Outfit", -apple-system, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 .mono {
   font-family: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
   font-feature-settings: "ss02";
 }
 .eyebrow {
-  font-family: "Geist", sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -85,8 +83,16 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
   white-space: nowrap;
 }
 .btn:hover { background: var(--coral); border-color: var(--coral); }
-.btn-coral { background: var(--coral); border-color: var(--coral); color: var(--bone); }
-.btn-coral:hover { background: var(--coral-deep); border-color: var(--coral-deep); }
+.btn-coral { 
+  background: linear-gradient(to right, #F95738, #FF9F1C, #F95738) !important;
+  background-size: 200% 100% !important;
+  animation: gradientMove 3s linear infinite;
+  border-color: transparent !important; 
+  color: var(--bone); 
+}
+.btn-coral:hover { 
+  opacity: 0.85;
+}
 .btn-ghost { background: transparent; color: var(--ink); }
 .btn-ghost:hover { background: var(--ink); color: var(--cream); }
 .btn-bone { background: var(--bone); border-color: var(--rule); color: var(--ink); }
@@ -117,9 +123,11 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
   border-color: var(--ink);
 }
 .chip.coral.active {
-  background: var(--coral);
+  background: linear-gradient(to right, #F95738, #FF9F1C, #F95738);
+  background-size: 200% 100%;
+  animation: gradientMove 3s linear infinite;
   color: var(--bone);
-  border-color: var(--coral);
+  border-color: transparent;
 }
 
 /* ——— inputs ——— */
@@ -182,14 +190,13 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "Newsreader", serif;
-  font-style: italic;
+  font-family: "Outfit", sans-serif;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
 }
 .leftrail .lr-brand-text {
   white-space: nowrap;
-  font-family: "Geist", sans-serif;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   font-size: 15px;
   letter-spacing: -0.01em;
@@ -197,9 +204,8 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
   transition: opacity 0.2s ease;
 }
 .leftrail .lr-brand-text .dnai {
-  font-family: "Newsreader", serif;
-  font-style: italic;
-  font-weight: 400;
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
   color: var(--coral);
   font-size: 17px;
   margin-left: 3px;
@@ -337,7 +343,7 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
   border-bottom-right-radius: 4px;
   align-self: flex-end;
 }
-.msg.ai.serif-italic { font-family: "Newsreader", serif; font-style: italic; font-size: 17px; line-height: 1.4; }
+.msg.ai.serif-italic { font-family: "Outfit", sans-serif; font-weight: 600; font-size: 16px; line-height: 1.4; }
 .chat-quick {
   display: flex;
   flex-wrap: wrap;
@@ -384,14 +390,18 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
   width: 34px; height: 34px;
   border-radius: 50%;
   border: 0;
-  background: var(--coral);
+  background: linear-gradient(to right, #F95738, #FF9F1C, #F95738);
+  background-size: 200% 100%;
+  animation: gradientMove 3s linear infinite;
   color: var(--bone);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.chat-input-row .send:hover { background: var(--coral-deep); }
+.chat-input-row .send:hover { 
+  opacity: 0.85;
+}
 .chat-meta {
   display: flex;
   justify-content: space-between;
@@ -413,7 +423,7 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
   border-bottom: 1px solid var(--rule);
 }
 .brand {
-  font-family: "Geist", sans-serif;
+  font-family: "Inter", sans-serif;
   font-weight: 600;
   font-size: 18px;
   letter-spacing: -0.02em;
@@ -427,9 +437,8 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
   color: var(--ink);
 }
 .brand .dnai {
-  font-family: "Newsreader", serif;
-  font-style: italic;
-  font-weight: 400;
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
   font-size: 22px;
   color: var(--coral);
   white-space: nowrap;
@@ -560,6 +569,12 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
 .stagger-3 { animation-delay: 0.25s; }
 .stagger-4 { animation-delay: 0.35s; }
 .stagger-5 { animation-delay: 0.45s; }
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
 /* progress bar */
 .progress {

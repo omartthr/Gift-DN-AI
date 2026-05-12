@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
 import { GIFT_RESULTS, type GiftResult } from "@/lib/data";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
+import GradientText from "@/components/GradientText";
 
 type WishlistItem = { name: string; store: string; tone: string; price: string; desc: string; note: string };
 
@@ -39,7 +40,7 @@ export default function ResultsClient() {
                 <span className="tag tag-sage">AI · 0.89</span>
               </div>
               <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
-                {t.results.title_a} <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.results.title_b}</span>
+                {t.results.title_a} <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.results.title_b}</GradientText>
               </h1>
               <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.results.sub}</p>
             </div>
@@ -61,7 +62,7 @@ export default function ResultsClient() {
                     </div>
                     <div className="col gap-16" style={{ flex: 1, padding: "4px 0" }}>
                       <div className="row gap-12 items-baseline">
-                        <span className="serif" style={{ fontSize: 48, color: "var(--coral)" }}>0{g.rank}</span>
+                        <GradientText className="serif" animationSpeed={3} style={{ fontSize: 48 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>0{g.rank}</GradientText>
                         <span className="eyebrow">{t.results.rank} · {g.rank}/3</span>
                       </div>
                       <h2 className="serif" style={{ fontSize: 42, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{g.name}</h2>
