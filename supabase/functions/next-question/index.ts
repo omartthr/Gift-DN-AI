@@ -10,33 +10,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function callOpenAI(prompt: string): Promise<string> {
-  const apiKey = Deno.env.get("OPENAI_API_KEY")!;
-  const url = "https://api.openai.com/v1/chat/completions";
+async function callGemini(prompt: string): Promise<string> {
+  const apiKey = Deno.env.get("GEMINI_API_KEY")!;
+  const model = "gemini-2.5-flash";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const body = {
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: prompt }],
-    response_format: { type: "json_object" },
-    temperature: 0.7,
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0.7,
+      responseMimeType: "application/json",
+    },
   };
 
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`OpenAI API hatası (${res.status}): ${err}`);
+    throw new Error(`Gemini API hatası (${res.status}): ${err}`);
   }
 
   const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? "";
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }
 
 serve(async (req) => {
@@ -145,7 +144,7 @@ Kurallar:
 5. Yalnızca ${session.language} dilinde yanıt ver
 6. options: single_choice veya multi_choice için 3-5 seçenek, text için null veya 3-4 kısa öneri`;
 
-    const rawText = await callOpenAI(prompt);
+    const rawText = await callGemini(prompt);
     const aiResponse = JSON.parse(rawText);
 
     // AI yanıtını konuşmaya ekle

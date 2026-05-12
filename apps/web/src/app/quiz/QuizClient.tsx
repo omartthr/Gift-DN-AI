@@ -183,7 +183,7 @@ function FinalizingScreen() {
         </h1>
         <div className="row gap-12 items-center">
           <span className="dots"><span /><span /><span /></span>
-          <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>OPENAI · GPT-4o · SERPAPI</span>
+          <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>GEMINI 2.5 FLASH · SERPAPI</span>
         </div>
         <div className="col gap-8" style={{ width: "100%", maxWidth: 420, marginTop: 16 }}>
           {t.quiz.steps.map((step: string, i: number) => (

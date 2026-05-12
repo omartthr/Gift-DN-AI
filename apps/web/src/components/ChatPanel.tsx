@@ -97,7 +97,7 @@ export default function ChatPanel() {
           <div className="col" style={{ gap: 2 }}>
             <span style={{ fontSize: 14, fontWeight: 500 }}>{lang === "tr" ? "AI Hediye Asistanı" : "AI Gift Assistant"}</span>
             <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>
-              {lang === "tr" ? "ÇEVRİMİÇİ · GPT-4o" : "ONLINE · GPT-4o"}
+              {lang === "tr" ? "ÇEVRİMİÇİ · GEMINI 2.5 FLASH" : "ONLINE · GEMINI 2.5 FLASH"}
             </span>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function ChatPanel() {
           </button>
         </div>
         <div className="chat-meta">
-          <span>AI · POWERED BY OPENAI</span>
+          <span>AI · POWERED BY GEMINI</span>
           <span>⌘K</span>
         </div>
       </div>
