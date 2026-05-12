@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
 import { useQuizStore } from "@/store/quizStore";
 import { useAuthStore } from "@/store/authStore";
-import { QUIZ_BANK, type QuizQuestion } from "@/lib/data";
+import { DID_YOU_KNOW, LOADING_STORIES } from "@/lib/loadingContent";
 import GradientText from "@/components/GradientText";
 
 // ─── Chip seçimi: Onboarding ───────────────────────────────────────────────
@@ -199,11 +199,45 @@ function OnboardingScreen() {
 // ─── Yükleniyor (AI düşünüyor) ─────────────────────────────────────────────
 
 function LoadingScreen({ label = "AI düşünüyor…" }: { label?: string }) {
+  const { lang } = useI18n();
+  const [fact, setFact] = useState("");
+  const [story, setStory] = useState("");
+
+  useEffect(() => {
+    // Pick random initial values
+    setFact(DID_YOU_KNOW[Math.floor(Math.random() * DID_YOU_KNOW.length)]);
+    setStory(LOADING_STORIES[Math.floor(Math.random() * LOADING_STORIES.length)]);
+
+    // Cycle every 6 seconds
+    const interval = setInterval(() => {
+      setFact(DID_YOU_KNOW[Math.floor(Math.random() * DID_YOU_KNOW.length)]);
+      setStory(LOADING_STORIES[Math.floor(Math.random() * LOADING_STORIES.length)]);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div className="col gap-16 items-center text-center">
-        <span className="dots"><span /><span /><span /></span>
-        <span className="mono" style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--muted)" }}>{label}</span>
+    <div className="fade-in" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
+      <div className="col gap-24 items-center text-center" style={{ maxWidth: 600 }}>
+        <div className="row gap-12 items-center">
+          <span className="dots"><span /><span /><span /></span>
+          <span className="mono" style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--muted)" }}>{label}</span>
+        </div>
+        
+        {/* Progress Story */}
+        <h2 className="serif fade-up" style={{ fontSize: 24, letterSpacing: "-0.01em", color: "var(--coral)", minHeight: 32 }}>
+          {story}
+        </h2>
+        
+        {/* Did You Know Fact */}
+        <div className="card fade-in" style={{ padding: 24, background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 12, marginTop: 16 }}>
+          <div className="eyebrow" style={{ marginBottom: 12 }}>
+            {lang === 'tr' ? 'BİLİYOR MUYDUNUZ?' : 'DID YOU KNOW?'}
+          </div>
+          <p style={{ fontSize: 16, lineHeight: 1.5, color: "var(--ink-2)" }}>
+            {fact}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -212,7 +246,21 @@ function LoadingScreen({ label = "AI düşünüyor…" }: { label?: string }) {
 // ─── Finalizing: AI hediye üretiyor ───────────────────────────────────────
 
 function FinalizingScreen() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const [fact, setFact] = useState("");
+  const [story, setStory] = useState("");
+
+  useEffect(() => {
+    setFact(DID_YOU_KNOW[Math.floor(Math.random() * DID_YOU_KNOW.length)]);
+    setStory(LOADING_STORIES[Math.floor(Math.random() * LOADING_STORIES.length)]);
+
+    const interval = setInterval(() => {
+      setFact(DID_YOU_KNOW[Math.floor(Math.random() * DID_YOU_KNOW.length)]);
+      setStory(LOADING_STORIES[Math.floor(Math.random() * LOADING_STORIES.length)]);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="fade-in" style={{ minHeight: "calc(100vh - 200px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div className="col gap-24 items-center text-center" style={{ maxWidth: 560, padding: "0 24px" }}>
@@ -224,14 +272,20 @@ function FinalizingScreen() {
           <span className="dots"><span /><span /><span /></span>
           <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>GEMINI 2.5 FLASH · SERPAPI</span>
         </div>
-        <div className="col gap-8" style={{ width: "100%", maxWidth: 420, marginTop: 16 }}>
-          {t.quiz.steps.map((step: string, i: number) => (
-            <div key={i} className="row gap-12 items-center fade-up"
-              style={{ padding: "10px 14px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6, animationDelay: `${i * 0.4}s` }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--coral)", display: "inline-block" }} />
-              <span style={{ fontSize: 13 }}>{step}</span>
-            </div>
-          ))}
+        
+        {/* Dynamic Story */}
+        <div className="serif fade-in" style={{ fontSize: 20, color: "var(--ink)", marginTop: 16, minHeight: 32 }}>
+          {story}
+        </div>
+
+        {/* Dynamic Fact */}
+        <div className="card fade-in" style={{ padding: 24, background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 12, marginTop: 16, width: "100%" }}>
+          <div className="eyebrow" style={{ marginBottom: 12 }}>
+            {lang === 'tr' ? 'BİLİYOR MUYDUNUZ?' : 'DID YOU KNOW?'}
+          </div>
+          <p style={{ fontSize: 16, lineHeight: 1.5, color: "var(--ink-2)" }}>
+            {fact}
+          </p>
         </div>
       </div>
     </div>

@@ -1,21 +1,21 @@
 /* Gift DN-AI — warm editorial design system */
 
 :root {
-  --cream: #F4EDDF;
-  --cream-2: #EFE6D2;
-  --bone: #FBF7EE;
-  --ink: #1B1611;
-  --ink-2: #2A2218;
-  --muted: #6E6253;
-  --muted-2: #918371;
+  --cream: #FAFAFA;
+  --cream-2: #F4F4F5;
+  --bone: #FFFFFF;
+  --ink: #09090B;
+  --ink-2: #27272A;
+  --muted: #71717A;
+  --muted-2: #A1A1AA;
   --coral: #D94A29;
   --coral-deep: #B83A1F;
   --sage: #8B9776;
   --rose: #E6BBAE;
   --clay: #C99877;
   --sky: #A8B5C2;
-  --rule: #D9CFB8;
-  --rule-soft: #E6DEC8;
+  --rule: #E4E4E7;
+  --rule-soft: #F4F4F5;
 }
 
 * { box-sizing: border-box; }
@@ -275,7 +275,7 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
 .leftrail .lr-signin { background: var(--ink); color: var(--cream); }
 .leftrail .lr-signin .lr-icon { color: var(--cream); }
 .leftrail .lr-signin .lr-label { color: var(--cream); white-space: nowrap; }
-.leftrail .lr-signin:hover { background: #2a2218; }
+.leftrail .lr-signin:hover { background: #27272A; }
 
 /* layout wrapper */
 .layout-with-rail {

@@ -119,6 +119,38 @@ export default function HomeClient() {
 
         <hr className="rule" />
 
+        {/* PREMIUM TEASER */}
+        <section style={{ padding: "80px 0" }}>
+          <div className="row gap-48 wrap" style={{ alignItems: "center" }}>
+            <div className="col gap-16" style={{ flex: "1 1 320px" }}>
+              <div className="eyebrow" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ width: 32, height: 1, background: "var(--coral)" }}></span>
+                GIFT DN-AI PREMIUM
+              </div>
+              <h2 className="serif" style={{ fontSize: "clamp(36px, 4vw, 48px)", lineHeight: 1.1, letterSpacing: "-0.01em" }}>
+                {lang === "tr" ? "Yapay zekanın tam" : "Unlock the full"} <br />
+                <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>
+                  {lang === "tr" ? "potansiyelini açın." : "potential of AI."}
+                </GradientText>
+              </h2>
+            </div>
+            <div className="col gap-24" style={{ flex: "1 1 320px" }}>
+              <p style={{ fontSize: 16, color: "var(--ink-2)", lineHeight: 1.6, maxWidth: 440 }}>
+                {lang === "tr" 
+                  ? "Ücretsiz planda hediye arama hakkınız sınırlıdır. Premium ile sevdikleriniz için sınırsız öneri alabilir, kişilik analizleri ve hatırlatıcılar ile hiçbir özel günü şansa bırakmazsınız." 
+                  : "Free searches are limited. With Premium, get unlimited suggestions, personality insights, and reminders so you never leave a special occasion to chance."}
+              </p>
+              <div>
+                <Link href="/pricing" className="btn btn-coral btn-lg" style={{ display: "inline-flex", boxShadow: "0 8px 24px -6px rgba(217, 74, 41, 0.3)" }}>
+                  {lang === "tr" ? "Premium'u İncele" : "Explore Premium"} →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr className="rule" />
+
         {/* MANIFESTO + COMMUNITY TEASER */}
         <section style={{ padding: "56px 0" }}>
           <div className="row gap-48 wrap" style={{ alignItems: "flex-start" }}>

@@ -5,6 +5,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { QuizSession, GiftSuggestion, InitialChips, NextQuestionResponse } from "@/types";
+import { useAuthStore } from "./authStore";
 
 // Supabase'in gizlediği gerçek hata metnini çıkar
 async function extractFnError(error: unknown): Promise<string> {
@@ -35,7 +36,6 @@ interface QuizState {
   gifts: GiftSuggestion[];
   phase: "chips" | "quiz" | "loading" | "generating" | "results";
   error: string | null;
-
   setChips: (chips: InitialChips) => void;
   startSession: (userId: string, language: string) => Promise<void>;
   submitAnswer: (answer: string) => Promise<void>;
@@ -53,8 +53,24 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
   setChips: (chips) => set({ chips }),
 
   startSession: async (_userId, language) => {
-    set({ phase: "loading", error: null });
+    const { profile } = useAuthStore.getState();
     const supabase = getSupabaseClient();
+
+    // Check free plan limits securely via DB count
+    if (profile?.subscription_status !== 'active') {
+      const { count } = await supabase
+        .from('quiz_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', _userId)
+        .eq('status', 'completed');
+      
+      if ((count ?? 0) >= 1) {
+        window.location.href = '/pricing';
+        return;
+      }
+    }
+
+    set({ phase: "loading", error: null });
 
     try {
       const { chips } = get();
@@ -117,7 +133,10 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
         if (giftErr) throw new Error(await extractFnError(giftErr));
         if (giftsData?.error) throw new Error(giftsData.error);
 
-        set({ gifts: giftsData?.gifts || [], phase: "results" });
+        set({ 
+          gifts: giftsData?.gifts || [], 
+          phase: "results"
+        });
       } else {
         set({ currentQuestion: data, phase: "quiz" });
       }

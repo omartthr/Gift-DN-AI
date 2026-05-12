@@ -14,6 +14,8 @@ function Icon({ name }: { name: string }) {
     case "discover": return <svg {...props}><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5 5-2z"/></svg>;
     case "community": return <svg {...props}><circle cx="9" cy="9" r="3"/><circle cx="17" cy="11" r="2.5"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5"/><path d="M14 18c.3-1.8 2-3 4-3s3 1 3 2.5"/></svg>;
     case "wishlist": return <svg {...props}><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>;
+    case "history": return <svg {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>;
+    case "star": return <svg {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
     case "globe": return <svg {...props}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>;
     default: return null;
   }
@@ -37,6 +39,8 @@ export default function AppShell({ children }: AppShellProps) {
     { k: "/quiz",      icon: "discover",  label: t.nav.discover,  kbd: "Q" },
     { k: "/community", icon: "community", label: t.nav.community, kbd: "C" },
     { k: "/wishlist",  icon: "wishlist",  label: t.nav.wishlist,  kbd: "W" },
+    { k: "/history",   icon: "history",   label: lang === "tr" ? "Geçmiş" : "History", kbd: "T" },
+    { k: "/pricing",   icon: "star",      label: "Premium",       kbd: "P" },
   ];
 
   const isActive = (k: string) => {

@@ -4,6 +4,10 @@ export interface Profile {
   full_name: string;
   avatar_url: string;
   language: "tr" | "en";
+  stripe_customer_id?: string;
+  subscription_status?: string;
+  price_id?: string;
+  current_period_end?: string;
   created_at: string;
 }
 
