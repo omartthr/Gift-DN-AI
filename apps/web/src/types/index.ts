@@ -87,4 +87,5 @@ export interface NextQuestionResponse {
   confidence_score: number;
   turn: number;
   completed: boolean;
+  reasoning?: string;
 }

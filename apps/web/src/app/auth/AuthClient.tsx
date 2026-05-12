@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
 import { useAuthStore } from "@/store/authStore";
 import GradientText from "@/components/GradientText";
@@ -10,6 +10,8 @@ export default function AuthClient() {
   const { t, lang } = useI18n();
   const { signIn } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next") || "/";
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +22,7 @@ export default function AuthClient() {
     setLoading(true);
     await signIn(email, password);
     setLoading(false);
-    router.push("/");
+    router.push(nextPath);  // ?next=/quiz varsa oraya dön
   };
 
   return (
