@@ -343,13 +343,14 @@ function FinalizingScreen() {
 // ─── Ana Quiz Ekranı ───────────────────────────────────────────────────────
 
 function QuizScreen() {
-  const { t } = useI18n();
-  const { currentQuestion, chips, submitAnswer, phase, error } = useQuizStore();
+  const { t, lang } = useI18n();
+  const { currentQuestion, chips, submitAnswer, phase, error, reset } = useQuizStore();
   const { user } = useAuthStore();
 
   const [answer, setAnswer] = useState("");
   const [multi, setMulti] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const turn = currentQuestion?.turn ?? 1;
@@ -591,18 +592,46 @@ function QuizScreen() {
                 <div className="row gap-8 items-center">
                   <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>KİM</span>
                   <span style={{ fontSize: 13 }}>
-                    {(chips.recipients || []).join(", ")}
+                    {(chips.recipients || []).map(r => (t.recipients as Record<string, string>)[r] || r).join(", ")}
                   </span>
                 </div>
                 <div className="row gap-8 items-center">
                   <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>BÜTÇE</span>
-                  <span style={{ fontSize: 13 }}>{chips.budget}</span>
+                  <span style={{ fontSize: 13 }}>{(t.budget as Record<string, string>)[chips.budget] || chips.budget}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      {/* Başa Dön Butonu */}
+      <button 
+        onClick={() => setShowRestartConfirm(true)}
+        className="btn btn-bone btn-sm fade-in"
+        style={{ position: "fixed", bottom: 24, right: 24, zIndex: 50, borderRadius: 999, padding: "8px 16px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", border: "1px solid var(--rule)" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginRight: 6 }}>
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+        </svg>
+        <span style={{ verticalAlign: "middle" }}>{lang === "tr" ? "Başa Dön" : "Restart"}</span>
+      </button>
+
+      {/* Özel Onay Modalı */}
+      {showRestartConfirm && (
+        <div className="fade-in" style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)" }}>
+          <div className="card fade-up" style={{ padding: 32, maxWidth: 400, width: "90%", background: "var(--cream)", border: "1px solid var(--rule)", borderRadius: 12, boxShadow: "0 24px 48px rgba(0,0,0,0.1)" }}>
+            <h3 className="serif" style={{ fontSize: 24, marginBottom: 12, color: "var(--ink)", letterSpacing: "-0.01em" }}>{lang === "tr" ? "Emin misiniz?" : "Are you sure?"}</h3>
+            <p style={{ fontSize: 15, color: "var(--ink-2)", marginBottom: 24, lineHeight: 1.5 }}>
+              {lang === "tr" ? "Başa dönmek üzeresiniz. Şimdiye kadarki tüm ilerlemeniz kaybolacak." : "You are about to start over. All your progress so far will be lost."}
+            </p>
+            <div className="row gap-12 justify-end">
+              <button className="btn btn-ghost" onClick={() => setShowRestartConfirm(false)}>{lang === "tr" ? "Vazgeç" : "Cancel"}</button>
+              <button className="btn btn-coral" onClick={() => reset()}>{lang === "tr" ? "Başa Dön" : "Restart"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
