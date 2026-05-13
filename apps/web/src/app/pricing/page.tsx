@@ -12,32 +12,28 @@ export default function PricingPage() {
   const handleSubscribe = async () => {
     try {
       setIsLoading(true);
-      
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          priceId: PLAN_PRICE_ID,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: PLAN_PRICE_ID }),
       });
-      
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create checkout session');
+        const errorData = await response.json();
+        throw new Error(errorData.message || errorData.error || 'Ödeme başlatılamadı.');
       }
-      
+
       const { url } = await response.json();
-      
+
       if (url) {
         window.location.href = url;
       } else {
         throw new Error('Geçerli bir ödeme adresi alınamadı.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Subscription error:', error);
-      alert('Abonelik başlatılırken bir hata oluştu. Lütfen giriş yaptığınızdan emin olun.');
+      alert(error.message || 'Abonelik başlatılırken bir hata oluştu.');
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +62,7 @@ export default function PricingPage() {
           {lang === 'tr' ? 'Sınırları kaldırın. En iyi hediyeyi her zaman bulun.' : 'Remove limits. Always find the perfect gift.'}
         </h1>
         <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 540, lineHeight: 1.5 }}>
-          {lang === 'tr' 
+          {lang === 'tr'
             ? 'Hediye bulma stresine son. Yapay zeka ile sevdikleriniz için nokta atışı öneriler almaya sınırsız şekilde devam edin.'
             : 'End the stress of finding gifts. Get endless, spot-on AI recommendations for your loved ones.'}
         </p>
@@ -74,11 +70,11 @@ export default function PricingPage() {
 
       {/* Pricing Card (Wide Layout) */}
       <div className="fade-up stagger-2" style={{ display: 'flex', justifyContent: 'center' }}>
-        <div 
-          style={{ 
-            maxWidth: 860, 
-            width: "100%", 
-            padding: "48px", 
+        <div
+          style={{
+            maxWidth: 860,
+            width: "100%",
+            padding: "48px",
             position: "relative",
             border: "2px solid var(--coral)",
             boxShadow: "0 24px 60px -12px rgba(217, 74, 41, 0.15)",
@@ -93,17 +89,17 @@ export default function PricingPage() {
           }}
         >
           {/* Badge */}
-          <div 
-            className="eyebrow" 
-            style={{ 
-              position: "absolute", 
-              top: -12, 
-              left: 48, 
+          <div
+            className="eyebrow"
+            style={{
+              position: "absolute",
+              top: -12,
+              left: 48,
               background: "linear-gradient(to right, #F95738, #FF9F1C, #F95738)",
               backgroundSize: "200% 100%",
               animation: "gradientMove 3s linear infinite",
-              color: "white", 
-              padding: "4px 14px", 
+              color: "white",
+              padding: "4px 14px",
               borderRadius: 999,
               letterSpacing: "0.1em",
               fontSize: 10,
@@ -117,19 +113,19 @@ export default function PricingPage() {
           {/* Left Column: Features */}
           <div className="col" style={{ flex: "1 1 360px" }}>
             <h2 className="serif" style={{ fontSize: 28, letterSpacing: "-0.01em", marginBottom: 24 }}>Gift DN-AI Pro</h2>
-            
+
             <ul className="col gap-16" style={{ listStyle: "none", padding: 0, margin: 0 }}>
               {features.map((feature, i) => (
                 <li key={i} className="row items-start gap-12">
-                  <div style={{ 
-                    background: "var(--cream-2)", 
-                    color: "var(--coral)", 
-                    width: 22, 
-                    height: 22, 
-                    borderRadius: "50%", 
-                    display: "flex", 
-                    alignItems: "center", 
-                    justifyContent: "center", 
+                  <div style={{
+                    background: "var(--cream-2)",
+                    color: "var(--coral)",
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     flexShrink: 0,
                     marginTop: 1
                   }}>
@@ -156,27 +152,27 @@ export default function PricingPage() {
               {lang === 'tr' ? 'İstediğiniz zaman iptal edebilirsiniz.' : 'Cancel anytime.'}
             </p>
 
-            <button 
-              onClick={handleSubscribe} 
+            <button
+              onClick={handleSubscribe}
               disabled={isLoading}
               className="btn btn-coral"
-              style={{ 
-                width: "100%", 
-                justifyContent: "center", 
-                padding: "16px 24px", 
-                fontSize: 16, 
+              style={{
+                width: "100%",
+                justifyContent: "center",
+                padding: "16px 24px",
+                fontSize: 16,
                 fontWeight: 600,
                 boxShadow: "0 8px 24px -6px rgba(217, 74, 41, 0.4)"
               }}
             >
-              {isLoading 
-                ? (lang === 'tr' ? 'Yönlendiriliyor...' : 'Redirecting...') 
+              {isLoading
+                ? (lang === 'tr' ? 'Yönlendiriliyor...' : 'Redirecting...')
                 : (lang === 'tr' ? 'Hemen Abone Ol' : 'Subscribe Now')}
             </button>
           </div>
         </div>
       </div>
-      
+
       {/* Trust Badges / Info */}
       <div className="row justify-center gap-24 wrap" style={{ marginTop: 32, opacity: 0.6 }}>
         <div className="row items-center gap-6">

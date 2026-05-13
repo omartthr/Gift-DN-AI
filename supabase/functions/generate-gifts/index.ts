@@ -194,13 +194,21 @@ YALNIZCA aşağıdaki yapıda geçerli bir JSON nesnesi döndür (dizi "gifts" k
           product_name: top.title || gift.product_name,
           product_description: gift.description,
           reasoning: gift.reasoning,
-          serp_results: (inRange.length ? inRange : serpResults).slice(0, 3),
+          // Her iki link formatını da sakla — frontend fallback olarak kullanır
+          serp_results: (inRange.length ? inRange : serpResults).slice(0, 3).map((r: any) => ({
+            title: r.title || "",
+            link: r.product_link || r.link || "",
+            thumbnail: r.thumbnail || "",
+            price: r.price || "",
+            source: r.source || "",
+          })),
           product_link: top.product_link || top.link || "",
           product_image: top.thumbnail || "",
           current_price: top.price || "",
           source_store: top.source || "",
           rank: gift.rank,
         };
+
 
         const extras = {
           source_icon: sourceIcon,

@@ -12,6 +12,8 @@ import GradientText from "@/components/GradientText";
 
 const recipientKeys = ["partner", "mom", "dad", "friend", "sibling", "coworker", "child", "other"] as const;
 const budgetKeys = ["b1", "b2", "b3", "b4", "b5"] as const;
+// Cinsiyeti belirsiz alıcılar — anne ve baba bu listede YOK
+const GENDER_AMBIGUOUS = new Set(["partner", "friend", "sibling", "coworker", "child", "other"]);
 
 function OnboardingScreen() {
   const { t, lang } = useI18n();
@@ -21,6 +23,7 @@ function OnboardingScreen() {
 
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>(chips.recipients || []);
   const [selectedBudget, setSelectedBudget] = useState(chips.budget || "");
+  const [selectedGender, setSelectedGender] = useState<string>(chips.recipientGender || "");
   const [customMin, setCustomMin] = useState("");
   const [customMax, setCustomMax] = useState("");
   const [starting, setStarting] = useState(false);
@@ -28,16 +31,22 @@ function OnboardingScreen() {
   const isCustomBudget = selectedBudget === "b_custom";
   const customBudgetValid = isCustomBudget ? (!!customMin && !!customMax && Number(customMin) < Number(customMax)) : true;
   const canContinue = selectedRecipients.length > 0 && !!selectedBudget && customBudgetValid;
+  const showGenderPicker = selectedRecipients.length > 0 && GENDER_AMBIGUOUS.has(selectedRecipients[0]);
 
   const selectRecipient = (k: string) => {
     setSelectedRecipients([k]);
+    if (!GENDER_AMBIGUOUS.has(k)) setSelectedGender("");
   };
 
   const handleStart = async () => {
     if (!canContinue) return;
 
     const budgetValue = isCustomBudget ? `${customMin}–${customMax} TL` : selectedBudget;
-    const newChips = { recipients: selectedRecipients, budget: budgetValue };
+    const newChips: typeof chips = {
+      recipients: selectedRecipients,
+      budget: budgetValue,
+      ...(showGenderPicker && selectedGender ? { recipientGender: selectedGender } : {}),
+    };
     setChips(newChips);
 
     if (!user) {
@@ -81,6 +90,32 @@ function OnboardingScreen() {
                       {(t.recipients as Record<string, string>)[k]}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Cinsiyet seçici — sadece cinsiyet belirsiz alıcı seçilince */}
+              <div style={{
+                overflow: "hidden",
+                maxHeight: showGenderPicker ? 120 : 0,
+                opacity: showGenderPicker ? 1 : 0,
+                transition: "max-height 0.35s ease, opacity 0.25s ease",
+              }}>
+                <div className="col gap-12" style={{ paddingTop: 8 }}>
+                  <div className="row items-baseline gap-12">
+                    <span className="eyebrow">{(t.onboarding as Record<string, string>).q_gender}</span>
+                    <span className="mono" style={{ fontSize: 11, color: "var(--muted-2)" }}>· {(t.onboarding as Record<string, string>).q_gender_hint}</span>
+                  </div>
+                  <div className="row wrap gap-8">
+                    {(["male", "female", "nonbinary"] as const).map(g => (
+                      <button
+                        key={g}
+                        className={"chip" + (selectedGender === g ? " active" : "")}
+                        onClick={() => setSelectedGender(selectedGender === g ? "" : g)}
+                      >
+                        {(t.onboarding as Record<string, string>)["gender_" + g]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -181,6 +216,19 @@ function OnboardingScreen() {
                           : <span style={{ color: "var(--muted-2)" }}>—</span>}
                     </div>
                   </div>
+                  {showGenderPicker && (
+                    <>
+                      <hr className="rule-soft" />
+                      <div>
+                        <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", marginBottom: 6 }}>{(t.onboarding as Record<string, string>).gender_label}</div>
+                        <div className="serif" style={{ fontSize: 22, lineHeight: 1.15, minHeight: 28 }}>
+                          {selectedGender
+                            ? (t.onboarding as Record<string, string>)["gender_" + selectedGender]
+                            : <span style={{ color: "var(--muted-2)" }}>—</span>}
+                        </div>
+                      </div>
+                    </>
+                  )}
                   <hr className="rule-soft" />
                   <div className="row gap-8 items-center" style={{ color: "var(--muted)", fontSize: 13 }}>
                     <span className="dots"><span /><span /><span /></span>
@@ -387,7 +435,7 @@ function QuizScreen() {
           <div className="col gap-32" style={{ flex: "1.6" }}>
             {/* Soru numarası + eyebrow */}
             <div className="row items-baseline gap-12">
-              <GradientText className="serif" animationSpeed={3} style={{ fontSize: 56 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{String(turn + 1).padStart(2, "0")}</GradientText>
+              <GradientText className="serif" animationSpeed={3} style={{ fontSize: 56 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{String(turn).padStart(2, "0")}</GradientText>
               <span className="eyebrow">{t.quiz.ai_question}</span>
             </div>
 

@@ -31,25 +31,34 @@ type DisplayGift = {
 
 function mapSuggestion(g: GiftSuggestion, i: number, lang: string): DisplayGift {
   const inStock = lang === "tr" ? "Stokta" : "In stock";
-  const mainImage = g.product_image || "";
+
+  // product_link / product_image boş gelebilir — serp_results'dan al
+  const serpTop = Array.isArray(g.serp_results) && g.serp_results.length > 0 ? g.serp_results[0] : null;
+  const link = g.product_link || serpTop?.link || "";
+  const mainImage = g.product_image || serpTop?.thumbnail || "";
+  const price = g.current_price || serpTop?.price || "";
+  const store = g.source_store || serpTop?.source || "";
+
   const extras = (g.thumbnails || []).filter((t) => t && t !== mainImage);
   const thumbnails = mainImage ? [mainImage, ...extras] : extras;
+
   return {
     rank: g.rank ?? i + 1,
     name: g.product_name || "—",
     tone: TONES[i % TONES.length],
     desc: g.product_description || "",
     why: g.reasoning || "",
-    price: g.current_price || "",
-    store: g.source_store || "",
+    price,
+    store,
     stock: inStock,
-    link: g.product_link || "",
+    link,
     image: mainImage,
     rating: typeof g.rating === "number" ? g.rating : undefined,
     sourceIcon: g.source_icon || "",
     thumbnails,
   };
 }
+
 
 function mapMock(g: GiftResult): DisplayGift {
   return {

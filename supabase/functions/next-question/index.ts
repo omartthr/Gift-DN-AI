@@ -121,6 +121,7 @@ Amacın, akıllı ve kişiselleştirilmiş sorular sorarak hediye alınacak kiş
 
 Bağlam:
 - Alıcı tipi: ${JSON.stringify(sessionChips.recipients || [])}
+- Alıcının cinsiyeti: ${sessionChips.recipientGender === "male" ? "Erkek" : sessionChips.recipientGender === "female" ? "Kadın" : sessionChips.recipientGender === "nonbinary" ? "Belirtilmedi" : "Belirtilmedi (anne/baba gibi zaten belli)"}
 - Bütçe: ${sessionChips.budget || "belirtilmedi"}
 - Dil: ${session.language} (yalnızca bu dilde yanıt ver)
 - Mevcut tur: ${newTurn} / 10

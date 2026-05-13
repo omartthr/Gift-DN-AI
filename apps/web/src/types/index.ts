@@ -14,6 +14,7 @@ export interface Profile {
 export interface InitialChips {
   recipients: string[];
   budget: string;
+  recipientGender?: string;
 }
 
 export interface ConversationMessage {
@@ -37,10 +38,13 @@ export interface QuizSession {
 export interface SerpResult {
   title: string;
   link: string;
+  product_link?: string;
   thumbnail: string;
   price: string;
   source: string;
+  extracted_price?: number;
 }
+
 
 export interface GiftSuggestion {
   id: string;
