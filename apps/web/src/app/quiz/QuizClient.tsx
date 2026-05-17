@@ -318,7 +318,6 @@ function FinalizingScreen() {
         </h1>
         <div className="row gap-12 items-center">
           <span className="dots"><span /><span /><span /></span>
-          <span className="mono" style={{ fontSize: 12, color: "var(--muted)" }}>GEMINI 2.5 FLASH · SERPAPI</span>
         </div>
         
         {/* Dynamic Story */}

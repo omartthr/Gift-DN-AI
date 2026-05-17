@@ -80,6 +80,10 @@ const tr = {
     shared: "Paylaşıldı",
     restart: "Baştan başla",
     status: "DURUM",
+    more: "Daha fazla öneri göster",
+    more_hint: "AI farklı seçenekler hazırlasın",
+    more_loading: "Yeni öneriler hazırlanıyor…",
+    more_empty: "Şu anda farklı bir öneri bulamadık. Tekrar deneyebilirsin.",
   },
   community: {
     eyebrow: "TOPLULUK AKIŞI",
@@ -212,6 +216,10 @@ const en = {
     shared: "Shared",
     restart: "Start over",
     status: "STATUS",
+    more: "Show more options",
+    more_hint: "Let the AI surface different picks",
+    more_loading: "Pulling more suggestions…",
+    more_empty: "Couldn't find different picks right now. Try again.",
   },
   community: {
     eyebrow: "COMMUNITY FEED",

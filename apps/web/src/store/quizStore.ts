@@ -36,9 +36,11 @@ interface QuizState {
   gifts: GiftSuggestion[];
   phase: "chips" | "quiz" | "loading" | "generating" | "results";
   error: string | null;
+  loadingMore: boolean;
   setChips: (chips: InitialChips) => void;
   startSession: (userId: string, language: string) => Promise<void>;
   submitAnswer: (answer: string) => Promise<void>;
+  loadMoreGifts: () => Promise<void>;
   reset: () => void;
 }
 
@@ -49,6 +51,7 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
   gifts: [],
   phase: "chips",
   error: null,
+  loadingMore: false,
 
   setChips: (chips) => set({ chips }),
 
@@ -145,6 +148,36 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
     }
   },
 
+  loadMoreGifts: async () => {
+    const { session, gifts, loadingMore } = get();
+    if (!session || loadingMore) return;
+
+    set({ loadingMore: true, error: null });
+    const supabase = getSupabaseClient();
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-gifts", {
+        body: {
+          session_id: session.id,
+          exclude_names: gifts.map((g) => g.product_name).filter(Boolean),
+        },
+      });
+
+      if (error) throw new Error(await extractFnError(error));
+      if (data?.error) throw new Error(data.error);
+
+      const incoming: GiftSuggestion[] = Array.isArray(data?.gifts) ? data.gifts : [];
+      const existingNames = new Set(gifts.map((g) => g.product_name));
+      const fresh = incoming.filter((g) => g.product_name && !existingNames.has(g.product_name));
+      const maxRank = gifts.reduce((m, g) => Math.max(m, g.rank ?? 0), 0);
+      const renumbered = fresh.map((g, i) => ({ ...g, rank: maxRank + i + 1 }));
+
+      set({ gifts: [...gifts, ...renumbered], loadingMore: false });
+    } catch (err: any) {
+      set({ error: err.message || "Bilinmeyen hata", loadingMore: false });
+    }
+  },
+
   reset: () => set({
     session: null,
     chips: { recipients: [], budget: "" },
@@ -152,6 +185,7 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
     gifts: [],
     phase: "chips",
     error: null,
+    loadingMore: false,
   }),
 }), {
   name: "gift-dn-ai:quiz",

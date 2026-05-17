@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
 import { useQuizStore } from "@/store/quizStore";
@@ -81,18 +81,42 @@ export default function ResultsClient() {
   const router = useRouter();
   const liveGifts = useQuizStore(s => s.gifts);
   const reset = useQuizStore(s => s.reset);
+  const loadMoreGifts = useQuizStore(s => s.loadMoreGifts);
+  const loadingMore = useQuizStore(s => s.loadingMore);
+  const session = useQuizStore(s => s.session);
 
-  const gifts: DisplayGift[] = liveGifts.length
-    ? [...liveGifts].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0)).map((g, i) => mapSuggestion(g, i, lang))
+  // Defansif filtre: backend zaten geçersiz ürünleri elemeli, ama yine de
+  // satış linki olmayan kart gösterme — kullanıcı boş bir hediye görmemeli.
+  const validLiveGifts = liveGifts.filter(g => {
+    const link = g.product_link || (Array.isArray(g.serp_results) ? g.serp_results[0]?.link : "") || "";
+    return Boolean(link);
+  });
+
+  const gifts: DisplayGift[] = validLiveGifts.length
+    ? [...validLiveGifts]
+        .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+        .map((g, i) => ({ ...mapSuggestion(g, i, lang), rank: i + 1 }))
     : (GIFT_RESULTS[lang] || GIFT_RESULTS["tr"]).map(mapMock);
+
+  const totalCount = gifts.length;
 
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [shareGift, setShareGift] = useState<DisplayGift | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const previousCountRef = useRef(gifts.length);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2400);
+  };
+
+  const handleLoadMore = async () => {
+    previousCountRef.current = gifts.length;
+    await loadMoreGifts();
+    const after = useQuizStore.getState().gifts.length;
+    if (after === previousCountRef.current) {
+      showToast(t.results.more_empty);
+    }
   };
 
   const addToWishlist = (g: DisplayGift) => {
@@ -124,6 +148,15 @@ export default function ResultsClient() {
         <hr className="rule" />
 
         <section style={{ padding: "32px 0 80px" }}>
+          {liveGifts.length > 0 && validLiveGifts.length === 0 && (
+            <div className="card" style={{ padding: 24, marginBottom: 24, background: "var(--cream-2)", border: "1px solid var(--rule)" }}>
+              <p style={{ fontSize: 15, color: "var(--ink-2)" }}>
+                {lang === "tr"
+                  ? "Önerilen hediyeler için online satış sayfası bulunamadı. Tercihlerinizi güncelleyip tekrar deneyebilirsiniz."
+                  : "We couldn't find online listings for the suggested gifts. Try adjusting your preferences and starting over."}
+              </p>
+            </div>
+          )}
           <div className="col gap-24">
             {gifts.map((g, i) => {
               const saved = wishlist.some(w => w.name === g.name);
@@ -136,7 +169,7 @@ export default function ResultsClient() {
                     <div className="col gap-16" style={{ flex: 1, padding: "4px 0" }}>
                       <div className="row gap-12 items-baseline">
                         <GradientText className="serif" animationSpeed={3} style={{ fontSize: 48 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>0{g.rank}</GradientText>
-                        <span className="eyebrow">{t.results.rank} · {g.rank}/3</span>
+                        <span className="eyebrow">{t.results.rank} · {g.rank}/{totalCount}</span>
                       </div>
                       <h2 className="serif" style={{ fontSize: 42, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{g.name}</h2>
                       {typeof g.rating === "number" && (
@@ -208,6 +241,41 @@ export default function ResultsClient() {
               );
             })}
           </div>
+
+          {validLiveGifts.length > 0 && session && (
+            <div className="col gap-12 items-center" style={{ marginTop: 56, textAlign: "center" }}>
+              <hr className="rule-soft" style={{ width: "100%", marginBottom: 24 }} />
+              <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "var(--muted)" }}>
+                {t.results.more_hint.toUpperCase()}
+              </span>
+              <button
+                className="btn btn-bone"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                style={{ minWidth: 280, opacity: loadingMore ? 0.7 : 1, cursor: loadingMore ? "wait" : "pointer" }}
+              >
+                {loadingMore ? (
+                  <span className="row gap-8 items-center" style={{ justifyContent: "center" }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 14,
+                        height: 14,
+                        border: "2px solid var(--rule)",
+                        borderTopColor: "var(--ink)",
+                        borderRadius: "50%",
+                        display: "inline-block",
+                        animation: "spin 0.8s linear infinite",
+                      }}
+                    />
+                    <span>{t.results.more_loading}</span>
+                  </span>
+                ) : (
+                  <span>+ {t.results.more}</span>
+                )}
+              </button>
+            </div>
+          )}
         </section>
       </div>
 

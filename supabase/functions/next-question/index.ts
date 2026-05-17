@@ -116,42 +116,93 @@ serve(async (req) => {
         ).join("\n")
       : "(Henüz yanıt yok)";
 
-    const prompt = `Sen Gift DN-AI adlı bir hediye öneri asistanısın.
-Amacın, akıllı ve kişiselleştirilmiş sorular sorarak hediye alınacak kişiyi derinlemesine tanımaktır.
+    const MIN_TURNS = 4;
+    const MAX_TURNS = 10;
 
-Bağlam:
+    const prompt = `Sen Gift DN-AI adlı bir hediye öneri asistanısın.
+Tek amacın: alıcıya en uygun hediyeyi bulmak için yeterli bağlamı toplamak. Bunu mümkün olan en az soruyla yap.
+
+BAĞLAM
 - Alıcı tipi: ${JSON.stringify(sessionChips.recipients || [])}
 - Alıcının cinsiyeti: ${sessionChips.recipientGender === "male" ? "Erkek" : sessionChips.recipientGender === "female" ? "Kadın" : sessionChips.recipientGender === "nonbinary" ? "Belirtilmedi" : "Belirtilmedi (anne/baba gibi zaten belli)"}
 - Bütçe: ${sessionChips.budget || "belirtilmedi"}
 - Dil: ${session.language} (yalnızca bu dilde yanıt ver)
-- Mevcut tur: ${newTurn} / 10
+- Mevcut tur: ${newTurn} / ${MAX_TURNS}
 - Önceki konuşma:
 ${historyText}
 
-Yanıtın MUTLAKA aşağıdaki yapıda geçerli bir JSON nesnesi olmalıdır:
+YANIT FORMATI (zorunlu, geçerli JSON):
 {
-  "question": "Bir sonraki sorun (yeterince emin isen null)",
-  "question_type": "text veya single_choice veya multi_choice",
+  "question": "Bir sonraki soru (bitir kararı verdiysen null)",
+  "question_type": "text | single_choice | multi_choice",
   "options": ["seçenek1", "seçenek2"] veya null,
-  "confidence_score": 0.0 ile 1.0 arasında bir sayı,
-  "reasoning": "Bu soruyu neden sorduğuna dair kısa bir not"
+  "confidence_score": 0.0–1.0 arasında, elindeki bilgiyle iyi bir hediye önerebilme güvenin,
+  "reasoning": "Bu soruyu neden bu adımda sorduğuna dair tek cümle"
 }
 
-Kurallar:
-1. confidence_score >= 0.85 VEYA tur >= 10 ise → question alanını null yap
-2. Her soru bir öncekinden farklı olmalıdır
-3. Sorular doğal, sıcak ve sohbet tonunda olmalıdır
-4. Genelden özele doğru ilerle
-5. Yalnızca ${session.language} dilinde yanıt ver
-6. options: single_choice veya multi_choice için 3-5 seçenek, text için null veya 3-4 kısa öneri`;
+KONU SINIRLARI (KESİN)
+Sorular YALNIZCA şu hediye-ilişkili konulardan biri hakkında olmalı:
+- Alıcının ilgi alanları, hobileri, tutkuları
+- Yaşam tarzı, günlük rutinleri (kahve seven mi, spor yapan mı, evde mi vakit geçiriyor vs.)
+- Kişilik özellikleri (pratik mi, duygusal mı, deneyim mi obje mi sever)
+- Son zamanlarda bahsettiği/istediği şeyler, eksiklerini hissettiği şeyler
+- Hediyenin vesilesi (doğum günü, sevgililer günü, "sadece çünkü" vb.)
+- Alıcı–verici ilişkisinin derinliği/havası (samimi mi, resmî mi, sürpriz mi olmalı)
+- Estetik tercihler (minimal, renkli, klasik vs.)
+- "Bu hediyeyle ne hissetmesini istiyorsun?" tarzı duygusal yönlendirme
+
+YASAK: Hediye kararıyla doğrudan ilgisi olmayan kişisel/özel sorular (yaş haricinde doğum tarihi, sağlık durumu, ilişki sorunları, mali durum, dini görüş, siyasi görüş, vb.) ASLA sorulmaz.
+
+SORU KALİTESİ
+1. Her soru, önceki cevaplardaki bilgilerin ÜZERİNE inşa edilmeli — bilineni tekrar sorma.
+2. Bir önceki cevap dar/genel ise, bir sonraki soru o cevabı netleştirici (somutlaştırıcı) olmalı.
+3. Aynı tema iki kez üst üste sorulmaz; her soru yeni bir boyut açmalı.
+4. Sorular kısa (max ~15 kelime), sıcak, sohbet tonunda, ${session.language} dilinde.
+5. options:
+   - single_choice / multi_choice: 3–5 somut, birbirinden farklı seçenek
+   - text: tahmin değeri olan 3–4 kısa öneri (hızlı seçim için) veya null
+6. İlk sorular geniş (ilgi alanı, yaşam tarzı), sonraki sorular daralan/netleştirici olmalı.
+
+BİTİRME KURALI (ÇOK ÖNEMLİ — quiz HER ZAMAN 10'a kadar gitmek ZORUNDA DEĞİL)
+Şu koşullardan biri gerçekleşirse question alanını null yap (oturum biter):
+- Tur ${MAX_TURNS}'a ulaştıysa (zorunlu son)
+- Tur >= 4 ve confidence_score >= 0.80
+- Tur >= 6 ve confidence_score >= 0.70
+- Tur >= 8 ve confidence_score >= 0.60
+
+Aksi halde question alanını DOLDUR.
+
+CONFIDENCE SKORU NASIL VERİLİR (dürüst ol, abartma ve eksik gösterme)
+- 0.0–0.3: Sadece chip bilgisi var, alıcının kişiliği hakkında neredeyse hiçbir şey bilmiyorum.
+- 0.4–0.6: Genel ilgi alanı/yaşam tarzı belli, ama somut hediye kategorisi seçemem.
+- 0.7–0.8: Net bir hediye kategorisi ve ton/tarz belli; 5–10 iyi seçenek üretebilirim.
+- 0.85+: Çok spesifik bir hediye fikri kafamda netleşti, sadece nihai detay eksik.
+
+Skoru her turda gerçekçi güncelle — bilgi geldikçe artır, gelmediyse koru. Aşırı düşük tutarak quizi gereksiz uzatma; aşırı yüksek tutarak da erken bitirme.`;
 
     const rawText = await callGemini(prompt);
     const aiResponse = JSON.parse(rawText);
+
+    // Server-side bitirme kuralları — AI prompt'a uymazsa devreye girer
+    // 1) MAX_TURNS'e ulaşıldıysa AI question döndürse bile zorla bitir
+    if (newTurn >= MAX_TURNS) {
+      aiResponse.question = null;
+    }
+    // 2) MIN_TURNS'ten önce AI yanlışlıkla null verirse, generic fallback soru üret
+    if (newTurn < MIN_TURNS && aiResponse.question === null) {
+      aiResponse.question = session.language === "tr"
+        ? "Alıcının son zamanlarda en çok ilgilendiği şey ne?"
+        : "What has the recipient been most interested in lately?";
+      aiResponse.question_type = "text";
+      aiResponse.options = null;
+    }
 
     // AI yanıtını konuşmaya ekle
     if (aiResponse.question) {
       history.push({ role: "assistant", content: aiResponse.question });
     }
+
+    const completed = aiResponse.question === null;
 
     // Oturumu güncelle
     await supabase
@@ -160,7 +211,7 @@ Kurallar:
         conversation_history: history,
         current_turn: newTurn,
         confidence_score: aiResponse.confidence_score,
-        status: aiResponse.question === null ? "completed" : "active",
+        status: completed ? "completed" : "active",
         updated_at: new Date().toISOString(),
       })
       .eq("id", session_id);
@@ -174,7 +225,7 @@ Kurallar:
         confidence_score: aiResponse.confidence_score,
         reasoning: aiResponse.reasoning || null,
         turn: newTurn,
-        completed: aiResponse.question === null,
+        completed,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

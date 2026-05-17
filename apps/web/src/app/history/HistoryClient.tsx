@@ -9,7 +9,7 @@ import TiltedCard from "@/components/TiltedCard";
 import GradientText from "@/components/GradientText";
 
 export default function HistoryClient() {
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const { user } = useAuthStore();
   
   const [sessions, setSessions] = useState<QuizSession[]>([]);
@@ -116,7 +116,9 @@ export default function HistoryClient() {
             <div className="col gap-8" style={{ maxHeight: "calc(100vh - 240px)", overflowY: "auto", paddingRight: 8 }}>
               {sessions.map(s => {
                 const isActive = selectedSession?.id === s.id;
-                const recips = s.initial_chips?.recipients?.join(", ") || (lang === 'tr' ? 'Bilinmeyen' : 'Unknown');
+                const recips = s.initial_chips?.recipients
+                  ?.map(r => (t.recipients as Record<string, string>)[r] || r)
+                  .join(", ") || (lang === 'tr' ? 'Bilinmeyen' : 'Unknown');
                 const budget = s.initial_chips?.budget || '';
                 
                 return (
