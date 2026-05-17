@@ -71,8 +71,8 @@ function mapMock(g: GiftResult): DisplayGift {
     price: g.price,
     store: g.store,
     stock: g.stock,
-    link: "",
-    image: "",
+    link: g.link || "",
+    image: g.image || "",
     thumbnails: [],
   };
 }
