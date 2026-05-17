@@ -13,9 +13,9 @@ interface AuthState {
   setProfile: (profile: Profile | null) => void;
   setLoading: (loading: boolean) => void;
   fetchProfile: (userId: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -35,6 +35,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error && data.user) set({ user: data.user });
+    return { error };
   },
   signInWithGoogle: async () => {
     const supabase = getSupabaseClient();
@@ -53,6 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       options: { data: { full_name: fullName } }
     });
     if (!error && data.user) set({ user: data.user });
+    return { error };
   },
   signOut: async () => {
     const supabase = getSupabaseClient();

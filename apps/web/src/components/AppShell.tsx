@@ -46,12 +46,12 @@ export default function AppShell({ children }: AppShellProps) {
   }, [initLang]);
 
   const items = [
-    { k: "/",          icon: "home",      label: t.nav.home,      kbd: "H" },
-    { k: "/quiz",      icon: "discover",  label: t.nav.discover,  kbd: "Q" },
-    { k: "/community", icon: "community", label: t.nav.community, kbd: "C" },
-    { k: "/wishlist",  icon: "wishlist",  label: t.nav.wishlist,  kbd: "W" },
-    { k: "/history",   icon: "history",   label: lang === "tr" ? "Geçmiş" : "History", kbd: "T" },
-    { k: "/pricing",   icon: "star",      label: "Premium",       kbd: "P" },
+    { k: "/",          icon: "home",      label: t.nav.home },
+    { k: "/quiz",      icon: "discover",  label: t.nav.discover },
+    { k: "/community", icon: "community", label: t.nav.community },
+    { k: "/wishlist",  icon: "wishlist",  label: t.nav.wishlist },
+    { k: "/history",   icon: "history",   label: lang === "tr" ? "Geçmiş" : "History" },
+    { k: "/pricing",   icon: "star",      label: "Premium" },
   ];
 
   const isActive = (k: string) => {
@@ -77,7 +77,6 @@ export default function AppShell({ children }: AppShellProps) {
             <Link key={it.k} href={it.k} className={"lr-item" + (isActive(it.k) ? " active" : "")} title={it.label}>
               <span className="lr-icon"><Icon name={it.icon} /></span>
               <span className="lr-label">{it.label}</span>
-              <span className="lr-kbd">{it.kbd}</span>
             </Link>
           ))}
         </div>
@@ -86,7 +85,6 @@ export default function AppShell({ children }: AppShellProps) {
           <button className="lr-item" onClick={() => setLang(lang === "tr" ? "en" : "tr")} title="Language" style={{ border: 0 }}>
             <span className="lr-icon"><Icon name="globe" /></span>
             <span className="lr-label">{lang === "tr" ? "Türkçe" : "English"}</span>
-            <span className="lr-kbd">{lang.toUpperCase()}</span>
           </button>
           {user ? (
             <button className="lr-item" onClick={() => setShowLogoutConfirm(true)} title={t.nav.logout} style={{ border: 0 }}>
@@ -206,15 +204,27 @@ function AuthModalInline({ initialMode, onClose }: { initialMode: "signin" | "si
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isSignUp, setIsSignUp] = useState(initialMode === "signup");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleAuth = async () => {
     if (!email || !pass) return;
+    setErrorMsg("");
     if (isSignUp) {
       if (!firstName || !lastName) return;
       const fullName = `${firstName} ${lastName}`.trim();
-      if (signUp) await signUp(email, pass, fullName);
+      if (signUp) {
+        const { error } = await signUp(email, pass, fullName);
+        if (error) {
+          setErrorMsg(lang === "tr" ? "Kayıt işlemi başarısız. Lütfen bilgilerinizi kontrol edin." : "Sign up failed. Please check your details.");
+          return;
+        }
+      }
     } else {
-      await signIn(email, pass);
+      const { error } = await signIn(email, pass);
+      if (error) {
+        setErrorMsg(lang === "tr" ? "E-posta veya şifre yanlış" : "Email or password incorrect");
+        return;
+      }
     }
     onClose();
   };
@@ -243,8 +253,11 @@ function AuthModalInline({ initialMode, onClose }: { initialMode: "signin" | "si
                 <input className="input" placeholder={lang === "tr" ? "Soyad" : "Last Name"} value={lastName} onChange={e => setLastName(e.target.value)} />
               </div>
             )}
-            <input className="input" placeholder={t.auth.email} value={email} onChange={e => setEmail(e.target.value)} />
-            <input className="input" type="password" placeholder={t.auth.pass} value={pass} onChange={e => setPass(e.target.value)} />
+            <input className="input" placeholder={t.auth.email} value={email} onChange={e => { setEmail(e.target.value); setErrorMsg(""); }} />
+            <input className="input" type="password" placeholder={t.auth.pass} value={pass} onChange={e => { setPass(e.target.value); setErrorMsg(""); }} />
+            {errorMsg && (
+              <div style={{ color: "var(--coral)", fontSize: 13, marginTop: -4 }}>{errorMsg}</div>
+            )}
             <button className="btn btn-coral btn-lg" onClick={handleAuth} style={{ marginTop: 8, width: "100%", justifyContent: "center" }}>
               {isSignUp ? (lang === "tr" ? "Kayıt Ol" : "Sign Up") : t.auth.cont}
             </button>
@@ -265,7 +278,7 @@ function AuthModalInline({ initialMode, onClose }: { initialMode: "signin" | "si
           </div>
           <div className="row gap-8 items-center" style={{ marginTop: 8, fontSize: 13, color: "var(--muted)" }}>
             <span>{isSignUp ? (lang === "tr" ? "Zaten hesabın var mı?" : "Already have an account?") : t.auth.noaccount}</span>
-            <GradientText onClick={() => setIsSignUp(!isSignUp)} animationSpeed={3} style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>
+            <GradientText onClick={() => { setIsSignUp(!isSignUp); setErrorMsg(""); }} animationSpeed={3} style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>
               {isSignUp ? (lang === "tr" ? "Giriş Yap" : "Sign In") : t.auth.signup}
             </GradientText>
           </div>

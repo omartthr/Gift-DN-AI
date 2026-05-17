@@ -102,6 +102,12 @@ export default function CommunityClient() {
   const [sort, setSort] = useState("new");
   // Mock postlar için local like state'i
   const [mockLikes, setMockLikes] = useState<Record<string, boolean>>({});
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2400);
+  };
 
   // Sayfa yüklendiğinde DB postlarını çek
   useEffect(() => {
@@ -175,8 +181,11 @@ export default function CommunityClient() {
   };
 
   const addToWishlist = async (p: UnifiedPost) => {
-    if (!user) return;
-    await addWishlistItem(user.id, {
+    if (!user) {
+      showToast(lang === "tr" ? "Lütfen önce giriş yapın" : "Please sign in first");
+      return;
+    }
+    const added = await addWishlistItem(user.id, {
       product_name: p.productName,
       product_link: p.productLink,
       product_image: p.productImage,
@@ -190,6 +199,9 @@ export default function CommunityClient() {
       tone: p.tone,
       note: "",
     });
+    if (added) {
+      showToast(lang === "tr" ? "İstek listesine eklendi ♡" : "Added to your wishlist ♡");
+    }
   };
 
   return (
@@ -298,6 +310,13 @@ export default function CommunityClient() {
           </div>
         </section>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fade-up" style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "var(--ink)", color: "var(--cream)", padding: "12px 20px", borderRadius: 999, fontSize: 13, zIndex: 60, boxShadow: "0 10px 30px rgba(27,22,17,0.2)" }}>
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
