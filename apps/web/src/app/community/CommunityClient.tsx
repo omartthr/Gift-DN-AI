@@ -200,7 +200,7 @@ export default function CommunityClient() {
             <div className="eyebrow">{t.community.eyebrow}</div>
             <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
               {t.community.title_a}<br />
-              <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.community.title_b}</GradientText>
+              <GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{t.community.title_b}</GradientText>
             </h1>
             <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.community.sub}</p>
           </div>

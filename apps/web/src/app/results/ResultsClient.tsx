@@ -95,8 +95,8 @@ export default function ResultsClient() {
 
   const gifts: DisplayGift[] = validLiveGifts.length
     ? [...validLiveGifts]
-        .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
-        .map((g, i) => ({ ...mapSuggestion(g, i, lang), rank: i + 1 }))
+      .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+      .map((g, i) => ({ ...mapSuggestion(g, i, lang), rank: i + 1 }))
     : (GIFT_RESULTS[lang] || GIFT_RESULTS["tr"]).map(mapMock);
 
   const totalCount = gifts.length;
@@ -164,7 +164,7 @@ export default function ResultsClient() {
                 <span className="tag tag-sage">AI · 0.89</span>
               </div>
               <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
-                {t.results.title_a} <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.results.title_b}</GradientText>
+                {t.results.title_a} <GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{t.results.title_b}</GradientText>
               </h1>
               <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.results.sub}</p>
             </div>
@@ -195,7 +195,7 @@ export default function ResultsClient() {
                     </div>
                     <div className="col gap-16" style={{ flex: 1, padding: "4px 0" }}>
                       <div className="row gap-12 items-baseline">
-                        <GradientText className="serif" animationSpeed={3} style={{ fontSize: 48 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>0{g.rank}</GradientText>
+                        <GradientText className="serif" animationSpeed={3} style={{ fontSize: 48 }} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>0{g.rank}</GradientText>
                         <span className="eyebrow">{t.results.rank} · {g.rank}/{totalCount}</span>
                       </div>
                       <h2 className="serif" style={{ fontSize: 42, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{g.name}</h2>

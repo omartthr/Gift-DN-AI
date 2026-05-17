@@ -3,7 +3,7 @@
 import { create } from "zustand";
 
 const tr = {
-  nav: { home: "Ana Sayfa", discover: "Keşfet", community: "Topluluk", wishlist: "İstek Listem", signin: "Giriş Yap", logout: "Çıkış Yap" },
+  nav: { home: "Ana Sayfa", discover: "Hediye Bul", community: "Topluluk", wishlist: "İstek Listem", signin: "Giriş Yap", logout: "Çıkış Yap" },
   landing: {
     eyebrow: "AI HEDİYE ASISTANI · TÜRKİYE",
     h1_a: "Doğru hediye,",
@@ -139,7 +139,7 @@ const tr = {
 };
 
 const en = {
-  nav: { home: "Home", discover: "Discover", community: "Community", wishlist: "Wishlist", signin: "Sign in", logout: "Logout" },
+  nav: { home: "Home", discover: "Find Gift", community: "Community", wishlist: "Wishlist", signin: "Sign in", logout: "Logout" },
   landing: {
     eyebrow: "AI GIFT ASSISTANT · TÜRKİYE",
     h1_a: "Choosing a gift",

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useI18n } from "@/store/i18nStore";
+import { useAuthStore } from "@/store/authStore";
 import { TONE_BG, COMMUNITY_FEED } from "@/lib/data";
 import Carousel from "@/components/Carousel";
 import TiltedCard from "@/components/TiltedCard";
@@ -17,6 +18,8 @@ function ImagePlaceholder({ tone = "sage", label, h = 240, style = {} }: { tone?
 
 export default function HomeClient() {
   const { t, lang } = useI18n();
+  const { profile } = useAuthStore();
+  const isPro = profile?.subscription_status === 'active';
 
   const sampleGifts = [
     { tone: "sage", name: lang === "tr" ? "El Yapımı Çay Seti" : "Handmade Tea Set", price: "₺ 1.480", store: lang === "tr" ? "İlbey Atölye" : "İlbey Atelier" },
@@ -53,7 +56,7 @@ export default function HomeClient() {
           </div>
 
           <h1 className="serif" style={{ fontSize: "clamp(48px, 6.2vw, 92px)", lineHeight: 1.04, letterSpacing: "-0.02em", maxWidth: 820 }}>
-            {t.landing.h1_a} <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.landing.h1_b}</GradientText> {t.landing.h1_c}
+            {t.landing.h1_a} <GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{t.landing.h1_b}</GradientText> {t.landing.h1_c}
           </h1>
 
           <p style={{ fontSize: 17, lineHeight: 1.55, color: "var(--ink-2)", maxWidth: 580, marginTop: 24 }}>{t.landing.sub}</p>
@@ -83,7 +86,7 @@ export default function HomeClient() {
             ].map((s, i) => (
               <div key={i} className="col gap-12" style={{ flex: "1 1 220px" }}>
                 <div className="row items-baseline gap-12">
-                  <GradientText className="serif" animationSpeed={3} style={{ fontSize: 36 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{s.n}</GradientText>
+                  <GradientText className="serif" animationSpeed={3} style={{ fontSize: 36 }} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{s.n}</GradientText>
                   <span className="eyebrow">{s.eye}</span>
                 </div>
                 <div className="serif" style={{ fontSize: 24, lineHeight: 1.15, letterSpacing: "-0.01em" }}>{s.body}</div>
@@ -102,8 +105,8 @@ export default function HomeClient() {
               <div className="eyebrow">{lang === "tr" ? "ÖRNEK SONUÇ" : "SAMPLE RESULT"}</div>
               <h2 className="serif" style={{ fontSize: 36, lineHeight: 1.1, letterSpacing: "-0.01em" }}>
                 {lang === "tr"
-                  ? <>{`Üç hediye, `}<GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>gerçek mağazalardan.</GradientText></>
-                  : <>{`Three gifts, `}<GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>from real shops.</GradientText></>}
+                  ? <>{`Üç hediye, `}<GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>gerçek mağazalardan.</GradientText></>
+                  : <>{`Three gifts, `}<GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>from real shops.</GradientText></>}
               </h2>
               <p style={{ fontSize: 15, color: "var(--ink-2)", lineHeight: 1.55, maxWidth: 460 }}>
                 {lang === "tr"
@@ -120,36 +123,40 @@ export default function HomeClient() {
         <hr className="rule" />
 
         {/* PREMIUM TEASER */}
-        <section style={{ padding: "80px 0" }}>
-          <div className="row gap-48 wrap" style={{ alignItems: "center" }}>
-            <div className="col gap-16" style={{ flex: "1 1 320px" }}>
-              <div className="eyebrow" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ width: 32, height: 1, background: "var(--coral)" }}></span>
-                GIFT DN-AI PREMIUM
+        {!isPro && (
+          <>
+            <section style={{ padding: "80px 0" }}>
+              <div className="row gap-48 wrap" style={{ alignItems: "center" }}>
+                <div className="col gap-16" style={{ flex: "1 1 320px" }}>
+                  <div className="eyebrow" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ width: 32, height: 1, background: "var(--coral)" }}></span>
+                    GIFT DN-AI PREMIUM
+                  </div>
+                  <h2 className="serif" style={{ fontSize: "clamp(36px, 4vw, 48px)", lineHeight: 1.1, letterSpacing: "-0.01em" }}>
+                    {lang === "tr" ? "Yapay zekanın tam" : "Unlock the full"} <br />
+                    <GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>
+                      {lang === "tr" ? "potansiyelini açın." : "potential of AI."}
+                    </GradientText>
+                  </h2>
+                </div>
+                <div className="col gap-24" style={{ flex: "1 1 320px" }}>
+                  <p style={{ fontSize: 16, color: "var(--ink-2)", lineHeight: 1.6, maxWidth: 440 }}>
+                    {lang === "tr" 
+                      ? "Ücretsiz planda hediye arama hakkınız sınırlıdır. Premium ile sevdikleriniz için sınırsız öneri alabilir, kişilik analizleri ve hatırlatıcılar ile hiçbir özel günü şansa bırakmazsınız." 
+                      : "Free searches are limited. With Premium, get unlimited suggestions, personality insights, and reminders so you never leave a special occasion to chance."}
+                  </p>
+                  <div>
+                    <Link href="/pricing" className="btn btn-coral btn-lg" style={{ display: "inline-flex", boxShadow: "0 8px 24px -6px rgba(217, 74, 41, 0.3)" }}>
+                      {lang === "tr" ? "Premium'u İncele" : "Explore Premium"} →
+                    </Link>
+                  </div>
+                </div>
               </div>
-              <h2 className="serif" style={{ fontSize: "clamp(36px, 4vw, 48px)", lineHeight: 1.1, letterSpacing: "-0.01em" }}>
-                {lang === "tr" ? "Yapay zekanın tam" : "Unlock the full"} <br />
-                <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>
-                  {lang === "tr" ? "potansiyelini açın." : "potential of AI."}
-                </GradientText>
-              </h2>
-            </div>
-            <div className="col gap-24" style={{ flex: "1 1 320px" }}>
-              <p style={{ fontSize: 16, color: "var(--ink-2)", lineHeight: 1.6, maxWidth: 440 }}>
-                {lang === "tr" 
-                  ? "Ücretsiz planda hediye arama hakkınız sınırlıdır. Premium ile sevdikleriniz için sınırsız öneri alabilir, kişilik analizleri ve hatırlatıcılar ile hiçbir özel günü şansa bırakmazsınız." 
-                  : "Free searches are limited. With Premium, get unlimited suggestions, personality insights, and reminders so you never leave a special occasion to chance."}
-              </p>
-              <div>
-                <Link href="/pricing" className="btn btn-coral btn-lg" style={{ display: "inline-flex", boxShadow: "0 8px 24px -6px rgba(217, 74, 41, 0.3)" }}>
-                  {lang === "tr" ? "Premium'u İncele" : "Explore Premium"} →
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        <hr className="rule" />
+            <hr className="rule" />
+          </>
+        )}
 
         {/* MANIFESTO + COMMUNITY TEASER */}
         <section style={{ padding: "56px 0" }}>

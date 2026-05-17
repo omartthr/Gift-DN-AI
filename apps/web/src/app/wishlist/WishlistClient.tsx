@@ -135,7 +135,7 @@ export default function WishlistClient() {
               <div className="eyebrow">{t.wishlist.eyebrow}</div>
               <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
                 {t.wishlist.title_a}<br />
-                <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.wishlist.title_b}</GradientText>
+                <GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{t.wishlist.title_b}</GradientText>
               </h1>
             </div>
           </section>
@@ -178,7 +178,7 @@ export default function WishlistClient() {
               <div className="eyebrow">{t.wishlist.eyebrow}</div>
               <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
                 {t.wishlist.title_a}<br />
-                <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.wishlist.title_b}</GradientText>
+                <GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{t.wishlist.title_b}</GradientText>
               </h1>
             </div>
           </section>
@@ -205,7 +205,7 @@ export default function WishlistClient() {
               <div className="eyebrow">{t.wishlist.eyebrow}</div>
               <h1 className="serif" style={{ fontSize: "clamp(52px, 7vw, 96px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
                 {t.wishlist.title_a}<br />
-                <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.wishlist.title_b}</GradientText>
+                <GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{t.wishlist.title_b}</GradientText>
               </h1>
             </div>
             <div className="col gap-8 items-end">

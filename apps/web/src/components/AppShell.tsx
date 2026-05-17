@@ -26,7 +26,7 @@ interface AppShellProps { children: React.ReactNode; }
 
 export default function AppShell({ children }: AppShellProps) {
   const { t, lang, setLang, initLang } = useI18n();
-  const { user, signOut } = useAuthStore();
+  const { user, profile, signOut } = useAuthStore();
   const resetQuiz = useQuizStore((s) => s.reset);
   const pathname = usePathname();
   const router = useRouter();
@@ -69,7 +69,7 @@ export default function AppShell({ children }: AppShellProps) {
       >
         <Link href="/" className="lr-brand" style={{ textDecoration: "none", color: "inherit" }}>
           <div className="lr-brand-glyph">G</div>
-          <div className="lr-brand-text">Gift<GradientText className="dnai" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>DN-AI</GradientText></div>
+          <div className="lr-brand-text">Gift<GradientText className="dnai" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>DN-AI</GradientText></div>
         </Link>
 
         <div className="lr-items">
@@ -90,10 +90,24 @@ export default function AppShell({ children }: AppShellProps) {
           </button>
           {user ? (
             <button className="lr-item" onClick={() => setShowLogoutConfirm(true)} title={t.nav.logout} style={{ border: 0 }}>
-              <span className="lr-icon" style={{ width: 22, height: 22, background: "var(--coral)", color: "var(--bone)", borderRadius: "50%", fontSize: 11, fontFamily: "JetBrains Mono", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span className="lr-icon" style={{ width: 22, height: 22, background: "#5A0F0F", color: "var(--bone)", borderRadius: "50%", fontSize: 11, fontFamily: "JetBrains Mono", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {user.email?.[0]?.toUpperCase() || "U"}
               </span>
-              <span className="lr-label" style={{ color: "var(--ink)" }}>{user.email?.split("@")[0]}</span>
+              <span className="lr-label" style={{ color: "var(--ink)", display: "flex", alignItems: "center", gap: 6 }}>
+                {user.email?.split("@")[0]}
+                {profile?.subscription_status === "active" && (
+                  <span style={{
+                    background: "linear-gradient(90deg, #5A0F0F, #C44900)",
+                    color: "white",
+                    fontSize: 9,
+                    fontWeight: 700,
+                    padding: "2px 6px",
+                    borderRadius: 12,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em"
+                  }}>PRO</span>
+                )}
+              </span>
             </button>
           ) : (
             <div className="lr-item lr-signin" title={t.nav.signin} style={{ border: 0, padding: "11px 13px" }}>
@@ -105,7 +119,7 @@ export default function AppShell({ children }: AppShellProps) {
               <span className="lr-label" style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                 <span onClick={() => setAuthMode("signin")} style={{ cursor: "pointer" }}>{lang === "tr" ? "Giriş Yap" : "Sign in"}</span>
                 <span style={{ opacity: 0.5 }}>·</span>
-                <GradientText onClick={() => setAuthMode("signup")} animationSpeed={3} style={{ cursor: "pointer" }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{lang === "tr" ? "Kayıt Ol" : "Sign up"}</GradientText>
+                <GradientText onClick={() => setAuthMode("signup")} animationSpeed={3} style={{ cursor: "pointer" }} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{lang === "tr" ? "Kayıt Ol" : "Sign up"}</GradientText>
               </span>
             </div>
           )}
@@ -186,7 +200,7 @@ export default function AppShell({ children }: AppShellProps) {
 
 function AuthModalInline({ initialMode, onClose }: { initialMode: "signin" | "signup"; onClose: () => void }) {
   const { t, lang } = useI18n();
-  const { signIn, signUp } = useAuthStore();
+  const { signIn, signUp, signInWithGoogle } = useAuthStore();
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -215,7 +229,7 @@ function AuthModalInline({ initialMode, onClose }: { initialMode: "signin" | "si
           <div className="eyebrow">GIFT · DN-AI</div>
           <h2 className="serif" style={{ fontSize: 44, lineHeight: 1.05, letterSpacing: "-0.02em" }}>
             {isSignUp ? (lang === "tr" ? "Hesap Oluştur" : "Create Account") : t.auth.title_a}<br />
-            {!isSignUp && <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{t.auth.title_b}</GradientText>}
+            {!isSignUp && <GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{t.auth.title_b}</GradientText>}
           </h2>
           <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>
             {isSignUp 
@@ -239,11 +253,19 @@ function AuthModalInline({ initialMode, onClose }: { initialMode: "signin" | "si
               <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.auth.or.toUpperCase()}</span>
               <span style={{ flex: 1, height: 1, background: "var(--rule)" }}></span>
             </div>
-            <button className="btn btn-bone btn-lg" onClick={handleAuth} style={{ width: "100%", justifyContent: "center" }}>G  {t.auth.google}</button>
+            <button className="btn btn-bone btn-lg" onClick={signInWithGoogle} style={{ width: "100%", justifyContent: "center", display: "flex", alignItems: "center", gap: "8px" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              {t.auth.google}
+            </button>
           </div>
           <div className="row gap-8 items-center" style={{ marginTop: 8, fontSize: 13, color: "var(--muted)" }}>
             <span>{isSignUp ? (lang === "tr" ? "Zaten hesabın var mı?" : "Already have an account?") : t.auth.noaccount}</span>
-            <GradientText onClick={() => setIsSignUp(!isSignUp)} animationSpeed={3} style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>
+            <GradientText onClick={() => setIsSignUp(!isSignUp)} animationSpeed={3} style={{ cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>
               {isSignUp ? (lang === "tr" ? "Giriş Yap" : "Sign In") : t.auth.signup}
             </GradientText>
           </div>

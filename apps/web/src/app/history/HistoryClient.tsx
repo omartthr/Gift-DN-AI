@@ -90,7 +90,7 @@ export default function HistoryClient() {
       <div className="row justify-between items-end" style={{ marginBottom: 40 }}>
         <div className="col gap-8">
           <h1 className="serif" style={{ fontSize: 44, letterSpacing: "-0.02em" }}>
-            {lang === "tr" ? "Geçmiş" : "History"} <GradientText className="serif-italic" animationSpeed={3} colors={["#F95738", "#FF9F1C", "#F95738"]}>{lang === "tr" ? "Aramalarınız." : "Searches."}</GradientText>
+            {lang === "tr" ? "Geçmiş" : "History"} <GradientText className="serif-italic" animationSpeed={3} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{lang === "tr" ? "Aramalarınız." : "Searches."}</GradientText>
           </h1>
           <p style={{ color: "var(--ink-2)", fontSize: 16 }}>
             {lang === "tr" ? "Eski sohbetleriniz ve AI hediye önerileriniz burada tutulur." : "Your past chats and AI gift suggestions are kept here."}

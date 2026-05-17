@@ -70,7 +70,9 @@ function OnboardingScreen() {
               <div className="eyebrow">{t.onboarding.eyebrow}</div>
               <h1 className="serif" style={{ fontSize: "clamp(48px, 6.5vw, 88px)", lineHeight: 1.08, letterSpacing: "-0.02em" }}>
                 {t.onboarding.title_a}<br />
-                <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.onboarding.title_b}</span>
+                <GradientText className="serif-italic" animationSpeed={8} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>
+                  {t.onboarding.title_b}
+                </GradientText>
               </h1>
               <p style={{ fontSize: 16, color: "var(--ink-2)", maxWidth: 520 }}>{t.onboarding.sub}</p>
 
@@ -415,7 +417,7 @@ function LoadingScreen({ label = "AI düşünüyor…" }: { label?: string }) {
   }, []);
 
   return (
-    <div className="fade-in" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
+    <div className="fade-in" style={{ minHeight: "calc(100vh - 200px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
       <div className="col gap-24 items-center text-center" style={{ maxWidth: 600, width: "100%" }}>
         <div className="row gap-12 items-center">
           <span className="dots"><span /><span /><span /></span>
@@ -426,8 +428,10 @@ function LoadingScreen({ label = "AI düşünüyor…" }: { label?: string }) {
         <ConfidenceTransition />
 
         {/* Progress Story */}
-        <h2 className="serif fade-up" style={{ fontSize: 24, letterSpacing: "-0.01em", color: "var(--coral)", minHeight: 32 }}>
-          {story}
+        <h2 className="serif fade-up" style={{ fontSize: 24, letterSpacing: "-0.01em", minHeight: 32 }}>
+          <GradientText animationSpeed={8} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>
+            {story}
+          </GradientText>
         </h2>
 
         {/* Did You Know Fact */}
@@ -467,7 +471,9 @@ function FinalizingScreen() {
       <div className="col gap-24 items-center text-center" style={{ maxWidth: 560, padding: "0 24px" }}>
         <div className="eyebrow">{t.quiz.eyebrow}</div>
         <h1 className="serif" style={{ fontSize: "clamp(40px, 5vw, 64px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
-          <span className="serif-italic" style={{ color: "var(--coral)" }}>{t.quiz.finalizing}</span>
+          <GradientText className="serif-italic" animationSpeed={8} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>
+            {t.quiz.finalizing}
+          </GradientText>
         </h1>
         <div className="row gap-12 items-center">
           <span className="dots"><span /><span /><span /></span>
@@ -624,8 +630,19 @@ function QuizScreen() {
   }, [question, questionType]);
 
   const handleSubmit = useCallback(async (val?: string) => {
-    const finalVal = val ?? (questionType === "multi_choice" ? multi.join(", ") : answer);
-    if (!finalVal && questionType !== "single_choice") return;
+    let finalVal = val;
+    if (!finalVal) {
+      if (questionType === "multi_choice") {
+        finalVal = multi.join(", ");
+        if (answer.trim()) finalVal += (finalVal ? " - Ek bilgi: " : "") + answer.trim();
+      } else {
+        finalVal = answer.trim();
+      }
+    } else {
+      if (answer.trim()) finalVal += " - Ek bilgi: " + answer.trim();
+    }
+
+    if (!finalVal) return; // Boş gönderimi engelle (Atla hariç, o özel bir değer yolluyor)
     setSubmitting(true);
     await submitAnswer(finalVal);
     setSubmitting(false);
@@ -651,10 +668,10 @@ function QuizScreen() {
     }
   };
 
-  const isSubmitDisabled =
-    submitting ||
-    (questionType === "multi_choice" && !multi.length) ||
-    (questionType === "text" && !answer.trim());
+  const isSubmitDisabled = submitting || (
+    questionType === "multi_choice" ? (!multi.length && !answer.trim()) :
+    !answer.trim()
+  );
 
   const progressPct = Math.min(((turn) / 10) * 100, 100);
   const confidencePct = Math.round(confidence * 100);
@@ -675,7 +692,7 @@ function QuizScreen() {
             <div className="row gap-16 items-center">
               <div className="col" style={{ alignItems: "flex-end" }}>
                 <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>{t.quiz.confidence}</span>
-                <GradientText className="serif" animationSpeed={3} style={{ fontSize: 18 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{confidence.toFixed(2)}</GradientText>
+                <GradientText className="serif" animationSpeed={3} style={{ fontSize: 18 }} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{confidence.toFixed(2)}</GradientText>
               </div>
             </div>
           </div>
@@ -690,7 +707,7 @@ function QuizScreen() {
           <div className="col gap-32" style={{ flex: "1.6" }}>
             {/* Soru numarası + eyebrow */}
             <div className="row items-baseline gap-12">
-              <GradientText className="serif" animationSpeed={3} style={{ fontSize: 56 }} colors={["#F95738", "#FF9F1C", "#F95738"]}>{String(turn).padStart(2, "0")}</GradientText>
+              <GradientText className="serif" animationSpeed={3} style={{ fontSize: 56 }} colors={["#5A0F0F", "#8F2C0E", "#C44900", "#5A0F0F"]}>{String(turn).padStart(2, "0")}</GradientText>
               <span className="eyebrow">{t.quiz.ai_question}</span>
             </div>
 
@@ -756,6 +773,24 @@ function QuizScreen() {
               </div>
             )}
 
+            {/* Ek Bilgi Kutucuğu (Single ve Multi choice için) */}
+            {(questionType === "single_choice" || questionType === "multi_choice") && (
+              <div className="col gap-8" style={{ marginTop: 16 }}>
+                <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>
+                  {lang === "tr" ? "VEYA EK BİLGİ EKLEYİN (OPSİYONEL)" : "OR ADD EXTRA INFO (OPTIONAL)"}
+                </span>
+                <input
+                  className="input"
+                  style={{ fontSize: "16px", padding: "12px 16px", color: "var(--ink)", fontFamily: "inherit", borderRadius: 8 }}
+                  placeholder={lang === "tr" ? "Şıklar uymadıysa veya eklemek istediğiniz bir şey varsa buraya yazın..." : "If options don't fit or you want to add more..."}
+                  value={answer}
+                  onChange={e => setAnswer(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={submitting}
+                />
+              </div>
+            )}
+
             {/* Hata mesajı */}
             {error && (
               <div style={{ padding: "12px 16px", background: "rgba(217,74,41,0.08)", border: "1px solid rgba(217,74,41,0.2)", borderRadius: 6, fontSize: 13, color: "var(--coral)" }}>
@@ -765,7 +800,7 @@ function QuizScreen() {
 
             {/* Alt butonlar — ekran görüntüsündeki gibi: "Devam et →", "Geç", "↵ ENTER" */}
             <div className="row gap-12 items-center" style={{ marginTop: 8 }}>
-              {questionType !== "single_choice" && (
+              {(questionType !== "single_choice" || answer.trim().length > 0) && (
                 <button
                   className="btn btn-coral btn-lg"
                   onClick={() => handleSubmit()}
