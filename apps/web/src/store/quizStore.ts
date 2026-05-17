@@ -22,17 +22,19 @@ async function extractFnError(error: unknown): Promise<string> {
 }
 
 const BUDGET_MAP: Record<string, string> = {
-  b1: "0–250 TL",
-  b2: "250–500 TL",
-  b3: "500–1000 TL",
-  b4: "1000–3000 TL",
-  b5: "3000+ TL",
+  b1: "0–500 TL",
+  b2: "500–1000 TL",
+  b3: "1000–3000 TL",
+  b4: "3000–10000 TL",
+  b5: "10000+ TL",
 };
 
 interface QuizState {
   session: QuizSession | null;
   chips: InitialChips;
   currentQuestion: NextQuestionResponse | null;
+  newQuestionPending: NextQuestionResponse | null;
+  previousConfidence: number;
   gifts: GiftSuggestion[];
   phase: "chips" | "quiz" | "loading" | "generating" | "results";
   error: string | null;
@@ -40,6 +42,7 @@ interface QuizState {
   setChips: (chips: InitialChips) => void;
   startSession: (userId: string, language: string) => Promise<void>;
   submitAnswer: (answer: string) => Promise<void>;
+  commitQuestion: () => void;
   loadMoreGifts: () => Promise<void>;
   reset: () => void;
 }
@@ -48,6 +51,8 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
   session: null,
   chips: { recipients: [], budget: "" },
   currentQuestion: null,
+  newQuestionPending: null,
+  previousConfidence: 0,
   gifts: [],
   phase: "chips",
   error: null,
@@ -73,7 +78,7 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
       }
     }
 
-    set({ phase: "loading", error: null });
+    set({ phase: "loading", error: null, previousConfidence: 0, newQuestionPending: null, currentQuestion: null });
 
     try {
       const { chips } = get();
@@ -103,17 +108,24 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
         });
       }
 
-      set({ currentQuestion: data, phase: "quiz" });
+      // Yeni soruyu beklemeye al — LoadingScreen güven skoru animasyonunu çalıştırır,
+      // animasyon bitince commitQuestion() çağırarak phase: "quiz"'e geçer.
+      set({ newQuestionPending: data });
     } catch (err: any) {
       set({ error: err.message || "Bilinmeyen hata", phase: "chips" });
     }
   },
 
   submitAnswer: async (answer) => {
-    const { session } = get();
+    const { session, currentQuestion } = get();
     if (!session) return;
 
-    set({ phase: "loading", error: null });
+    set({
+      phase: "loading",
+      error: null,
+      previousConfidence: currentQuestion?.confidence_score ?? 0,
+      newQuestionPending: null,
+    });
     const supabase = getSupabaseClient();
 
     try {
@@ -141,11 +153,23 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
           phase: "results"
         });
       } else {
-        set({ currentQuestion: data, phase: "quiz" });
+        // Yeni soru hazır — LoadingScreen güven skoru geçişini animasyonla
+        // gösterip bitince commitQuestion() ile phase'i "quiz"e çevirecek.
+        set({ newQuestionPending: data });
       }
     } catch (err: any) {
       set({ error: err.message || "Bilinmeyen hata", phase: "quiz" });
     }
+  },
+
+  commitQuestion: () => {
+    const { newQuestionPending } = get();
+    if (!newQuestionPending) return;
+    set({
+      currentQuestion: newQuestionPending,
+      newQuestionPending: null,
+      phase: "quiz",
+    });
   },
 
   loadMoreGifts: async () => {
@@ -182,6 +206,8 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
     session: null,
     chips: { recipients: [], budget: "" },
     currentQuestion: null,
+    newQuestionPending: null,
+    previousConfidence: 0,
     gifts: [],
     phase: "chips",
     error: null,

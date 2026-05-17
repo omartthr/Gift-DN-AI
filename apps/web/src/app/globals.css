@@ -640,3 +640,9 @@ h1.serif, h2.serif { padding-bottom: 0.08em; }
   50% { box-shadow: 0 6px 24px rgba(217,74,41,0.55); }
 }
 .resume-cta:hover { background: var(--coral-deep) !important; transform: translateY(-1px); transition: transform 0.15s ease; }
+
+@keyframes confPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.conf-pulse { animation: confPulse 1.4s ease-in-out infinite; }

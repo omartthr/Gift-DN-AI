@@ -135,7 +135,7 @@ const tr = {
     post: "Paylaş",
   },
   recipients: { partner: "Sevgili", mom: "Anne", dad: "Baba", friend: "Arkadaş", sibling: "Kardeş", coworker: "İş Arkadaşı", child: "Çocuk", other: "Diğer" },
-  budget: { b1: "0 – 250 ₺", b2: "250 – 500 ₺", b3: "500 – 1.000 ₺", b4: "1.000 – 3.000 ₺", b5: "3.000 ₺ +" },
+  budget: { b1: "0 – 500 ₺", b2: "500 – 1.000 ₺", b3: "1.000 – 3.000 ₺", b4: "3.000 – 10.000 ₺", b5: "10.000 ₺ +" },
 };
 
 const en = {
@@ -271,7 +271,7 @@ const en = {
     post: "Post",
   },
   recipients: { partner: "Partner", mom: "Mom", dad: "Dad", friend: "Friend", sibling: "Sibling", coworker: "Coworker", child: "Child", other: "Other" },
-  budget: { b1: "₺0 – 250", b2: "₺250 – 500", b3: "₺500 – 1,000", b4: "₺1,000 – 3,000", b5: "₺3,000 +" },
+  budget: { b1: "₺0 – 500", b2: "₺500 – 1,000", b3: "₺1,000 – 3,000", b4: "₺3,000 – 10,000", b5: "₺10,000 +" },
 };
 
 export type Lang = "tr" | "en";

@@ -244,6 +244,156 @@ function OnboardingScreen() {
   );
 }
 
+// ─── Güven skoru geçiş animasyonu ──────────────────────────────────────────
+
+function ConfidenceTransition() {
+  const { lang } = useI18n();
+  const previousConfidence = useQuizStore(s => s.previousConfidence);
+  const newQuestionPending = useQuizStore(s => s.newQuestionPending);
+  const commitQuestion = useQuizStore(s => s.commitQuestion);
+
+  const [displayValue, setDisplayValue] = useState(previousConfidence);
+  const [animDone, setAnimDone] = useState(false);
+  const target = newQuestionPending?.confidence_score ?? previousConfidence;
+  const delta = target - previousConfidence;
+  const isIncrease = delta > 0.0005;
+  const isDecrease = delta < -0.0005;
+
+  useEffect(() => {
+    if (!newQuestionPending) {
+      setDisplayValue(previousConfidence);
+      setAnimDone(false);
+      return;
+    }
+
+    const from = previousConfidence;
+    const to = newQuestionPending.confidence_score;
+    const duration = 1400;
+    const start = performance.now();
+    let raf = 0;
+
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      // easeOutCubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayValue(from + (to - from) * eased);
+      if (t < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        setAnimDone(true);
+        // Sayı oturduktan sonra kısa bir nefes payı ver, sonra quiz'e geç
+        setTimeout(() => commitQuestion(), 650);
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [newQuestionPending, previousConfidence, commitQuestion]);
+
+  const waiting = !newQuestionPending;
+  const pct = Math.max(0, Math.min(1, displayValue)) * 100;
+  const prevPct = Math.max(0, Math.min(1, previousConfidence)) * 100;
+
+  const accent = isDecrease ? "var(--coral)" : "var(--sage, #6b8e63)";
+  const deltaSign = isIncrease ? "+" : isDecrease ? "−" : "±";
+  const deltaLabel = `${deltaSign}${Math.abs(delta).toFixed(2)}`;
+  const showDelta = !!newQuestionPending && (isIncrease || isDecrease);
+
+  return (
+    <div style={{ width: "100%", maxWidth: 320 }}>
+      <div className="row items-baseline" style={{ gap: 10, justifyContent: "space-between" }}>
+        <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "var(--muted)" }}>
+          {lang === "tr" ? "GÜVEN" : "CONFIDENCE"}
+        </span>
+        <span className="row items-baseline" style={{ gap: 8 }}>
+          <span
+            className="serif"
+            style={{
+              fontSize: 22,
+              lineHeight: 1,
+              color: "var(--ink)",
+              fontVariantNumeric: "tabular-nums",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {displayValue.toFixed(2)}
+          </span>
+          <span
+            className="mono"
+            style={{
+              fontSize: 11,
+              color: showDelta ? accent : "transparent",
+              fontVariantNumeric: "tabular-nums",
+              transition: "color 0.4s ease",
+              minWidth: 44,
+              textAlign: "right",
+            }}
+          >
+            {showDelta ? deltaLabel : "·"}
+          </span>
+        </span>
+      </div>
+
+      {/* Hairline bar */}
+      <div
+        style={{
+          position: "relative",
+          marginTop: 8,
+          height: 2,
+          background: "var(--rule)",
+          borderRadius: 999,
+          overflow: "visible",
+        }}
+      >
+        {/* Eski değer için ince hayalet işaret */}
+        {newQuestionPending && Math.abs(delta) > 0.0005 && (
+          <span
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              height: "100%",
+              width: `${prevPct}%`,
+              background: "var(--muted-2)",
+              opacity: 0.3,
+              borderRadius: 999,
+            }}
+          />
+        )}
+        {/* Aktif bar */}
+        <span
+          className={waiting ? "conf-pulse" : undefined}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            height: "100%",
+            width: `${pct}%`,
+            background: accent,
+            borderRadius: 999,
+            transition: waiting ? "none" : "background 0.3s ease",
+          }}
+        />
+        {/* Mevcut değer üzerine küçük nokta (modern dashboard görünümü) */}
+        <span
+          style={{
+            position: "absolute",
+            left: `${pct}%`,
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "var(--cream)",
+            border: `1.5px solid ${accent}`,
+            boxShadow: animDone ? `0 0 0 4px ${isDecrease ? "rgba(217,74,41,0.12)" : "rgba(107,142,99,0.14)"}` : "none",
+            transition: "box-shadow 0.4s ease",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── Yükleniyor (AI düşünüyor) ─────────────────────────────────────────────
 
 function LoadingScreen({ label = "AI düşünüyor…" }: { label?: string }) {
@@ -266,17 +416,20 @@ function LoadingScreen({ label = "AI düşünüyor…" }: { label?: string }) {
 
   return (
     <div className="fade-in" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px" }}>
-      <div className="col gap-24 items-center text-center" style={{ maxWidth: 600 }}>
+      <div className="col gap-24 items-center text-center" style={{ maxWidth: 600, width: "100%" }}>
         <div className="row gap-12 items-center">
           <span className="dots"><span /><span /><span /></span>
           <span className="mono" style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--muted)" }}>{label}</span>
         </div>
-        
+
+        {/* Güven skoru geçişi */}
+        <ConfidenceTransition />
+
         {/* Progress Story */}
         <h2 className="serif fade-up" style={{ fontSize: 24, letterSpacing: "-0.01em", color: "var(--coral)", minHeight: 32 }}>
           {story}
         </h2>
-        
+
         {/* Did You Know Fact */}
         <div className="card fade-in" style={{ padding: 24, background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 12, marginTop: 16 }}>
           <div className="eyebrow" style={{ marginBottom: 12 }}>
@@ -335,6 +488,108 @@ function FinalizingScreen() {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Tutarlı seçenek listesi (Onedio tarzı) ───────────────────────────────
+
+function OptionList({
+  options,
+  selected,
+  onClick,
+  disabled,
+  multi,
+}: {
+  options: string[];
+  selected: string[];
+  onClick: (opt: string) => void;
+  disabled?: boolean;
+  multi?: boolean;
+}) {
+  return (
+    <div className="col gap-10" style={{ width: "100%" }}>
+      {options.map((opt, i) => {
+        const isSelected = selected.includes(opt);
+        return (
+          <button
+            key={i}
+            onClick={() => onClick(opt)}
+            disabled={disabled}
+            className="row items-center justify-between"
+            style={{
+              padding: "16px 22px",
+              background: isSelected ? "var(--cream-2)" : "var(--bone)",
+              border: `1px solid ${isSelected ? "var(--ink)" : "var(--rule)"}`,
+              borderRadius: 8,
+              fontFamily: "inherit",
+              fontSize: "clamp(15px, 2vw, 18px)",
+              color: "var(--ink)",
+              cursor: disabled ? "default" : "pointer",
+              textAlign: "left",
+              transition: "all 0.15s ease",
+              width: "100%",
+              gap: 16,
+            }}
+            onMouseEnter={e => {
+              if (disabled || isSelected) return;
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--ink)";
+              (e.currentTarget as HTMLElement).style.background = "var(--cream-2)";
+            }}
+            onMouseLeave={e => {
+              if (disabled || isSelected) return;
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--rule)";
+              (e.currentTarget as HTMLElement).style.background = "var(--bone)";
+            }}
+          >
+            <span className="row items-center" style={{ gap: 14, flex: 1, minWidth: 0 }}>
+              <span
+                className="mono"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  background: isSelected ? "var(--ink)" : "var(--cream-2)",
+                  color: isSelected ? "var(--cream)" : "var(--muted)",
+                  fontSize: 12,
+                  letterSpacing: "0.04em",
+                  flexShrink: 0,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {String.fromCharCode(65 + i)}
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>{opt}</span>
+            </span>
+            {multi && (
+              <span
+                aria-hidden
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 4,
+                  border: `1.5px solid ${isSelected ? "var(--ink)" : "var(--muted-2)"}`,
+                  background: isSelected ? "var(--ink)" : "transparent",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {isSelected && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--cream)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -445,7 +700,7 @@ function QuizScreen() {
               {question}
             </h1>
 
-            {/* Text tipi: underline input + chip öneriler */}
+            {/* Text tipi: underline input (opsiyonel öneriler aşağıda aynı formatta) */}
             {(questionType === "text" || (!questionType)) && (
               <div className="col gap-16" key={"text-" + turn}>
                 <input
@@ -459,72 +714,45 @@ function QuizScreen() {
                   disabled={submitting}
                 />
                 {options.length > 0 && (
-                  <div className="row wrap gap-8">
-                    {options.map((opt, i) => (
-                      <button key={i} className="chip" onClick={() => handleOptionClick(opt)} disabled={submitting}>
-                        {opt}
-                      </button>
-                    ))}
+                  <div className="col gap-8">
+                    <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)" }}>
+                      {lang === "tr" ? "VEYA SEÇENEKLERDEN BİRİNİ SEÇ" : "OR PICK ONE BELOW"}
+                    </span>
+                    <OptionList
+                      options={options}
+                      selected={answer ? [answer] : []}
+                      onClick={handleOptionClick}
+                      disabled={submitting}
+                      multi={false}
+                    />
                   </div>
                 )}
               </div>
             )}
 
-            {/* Single choice: büyük liste butonları */}
+            {/* Single choice: tek seçim */}
             {questionType === "single_choice" && (
               <div className="col gap-10" key={"single-" + turn}>
-                {options.map((opt, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleOptionClick(opt)}
-                    disabled={submitting}
-                    className="row items-center justify-between"
-                    style={{
-                      padding: "16px 22px",
-                      background: "var(--bone)",
-                      border: "1px solid var(--rule)",
-                      borderRadius: 6,
-                      fontFamily: "inherit",
-                      fontSize: "clamp(15px, 2vw, 18px)",
-                      color: "var(--ink)",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      transition: "all 0.15s ease",
-                      width: "100%",
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLElement).style.borderColor = "var(--ink)";
-                      (e.currentTarget as HTMLElement).style.background = "var(--cream-2)";
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLElement).style.borderColor = "var(--rule)";
-                      (e.currentTarget as HTMLElement).style.background = "var(--bone)";
-                    }}
-                  >
-                    <span>{opt}</span>
-                    <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)" }}>
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                  </button>
-                ))}
+                <OptionList
+                  options={options}
+                  selected={[]}
+                  onClick={handleOptionClick}
+                  disabled={submitting}
+                  multi={false}
+                />
               </div>
             )}
 
-            {/* Multi choice: chip grubu */}
+            {/* Multi choice: çoklu seçim, aynı format */}
             {questionType === "multi_choice" && (
-              <div className="col gap-16" key={"multi-" + turn}>
-                <div className="row wrap gap-8">
-                  {options.map((opt, i) => (
-                    <button
-                      key={i}
-                      className={"chip" + (multi.includes(opt) ? " active" : "")}
-                      onClick={() => handleOptionClick(opt)}
-                      disabled={submitting}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
+              <div className="col gap-10" key={"multi-" + turn}>
+                <OptionList
+                  options={options}
+                  selected={multi}
+                  onClick={handleOptionClick}
+                  disabled={submitting}
+                  multi={true}
+                />
               </div>
             )}
 

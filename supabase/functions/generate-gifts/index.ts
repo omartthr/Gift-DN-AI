@@ -133,6 +133,47 @@ async function searchSerpAPI(query: string, language: string, budget: BudgetRang
   return await searchSerpWeb(query, language);
 }
 
+// ── Persona için ilişki etiketi ─────────────────────────────────────────
+// Hem ana giftPrompt hem regenerateGift aynı haritayı kullanıyor.
+const RECIPIENT_LABELS_TR: Record<string, string> = {
+  mom: "annen",
+  dad: "baban",
+  partner: "partnerin",
+  friend: "arkadaşın",
+  sibling: "kardeşin",
+  coworker: "iş arkadaşın",
+  child: "çocuğun",
+  other: "yakının",
+};
+const RECIPIENT_LABELS_EN: Record<string, string> = {
+  mom: "your mom",
+  dad: "your dad",
+  partner: "your partner",
+  friend: "your friend",
+  sibling: "your sibling",
+  coworker: "your coworker",
+  child: "your child",
+  other: "your loved one",
+};
+const GENDER_AMBIGUOUS = new Set([
+  "partner", "friend", "sibling", "coworker", "child", "other",
+]);
+
+function resolveRecipient(chips: any, language: string): { label: string; genderNote: string } {
+  const list: string[] = Array.isArray(chips?.recipients) ? chips.recipients : [];
+  const key = list[0] || "other";
+  const labels = language === "en" ? RECIPIENT_LABELS_EN : RECIPIENT_LABELS_TR;
+  const label = labels[key] || labels.other;
+  const genderNote = GENDER_AMBIGUOUS.has(key) && chips?.recipientGender
+    ? (chips.recipientGender === "male"
+        ? (language === "en" ? " (male)" : " (erkek)")
+        : chips.recipientGender === "female"
+          ? (language === "en" ? " (female)" : " (kadın)")
+          : "")
+    : "";
+  return { label, genderNote };
+}
+
 async function regenerateGift(
   failed: { product_name: string; description?: string; reasoning?: string; rank: number },
   chips: any,
@@ -142,14 +183,15 @@ async function regenerateGift(
   budgetConstraint: string,
   excludeList: string[] = [],
 ) {
+  const { label: recipientLabel, genderNote } = resolveRecipient(chips, language);
   const excludeBlock = excludeList.length > 0
     ? `\n\nŞu ürünleri önerme (kullanıcıya zaten gösterildi): ${excludeList.map((n) => `"${n}"`).join(", ")}`
     : "";
-  const prompt = `Önceki hediye önerisi "${failed.product_name}" için Türkiye'de online satın alınabilir bir sayfa bulunamadı (Google Shopping ve web aramasında sonuç yok).
+  const prompt = `Sen, kullanıcının ${recipientLabel}${genderNote} iyi tanıyan, neyi sevip neyi sevmediğini içeriden bilen yakın bir dost rolündesin. Kullanıcıyla 2. tekil şahıs konuşursun.
 
-Aynı temada ama daha kolay bulunabilir, somut ve online satışta olan ALTERNATİF bir hediye öner.
+Önceki hediye önerisi "${failed.product_name}" için Türkiye'de online satın alınabilir bir sayfa bulunamadı (Google Shopping ve web aramasında sonuç yok). Aynı temada ama daha kolay bulunabilir, somut ve online satışta olan ALTERNATİF bir hediye öner.
 
-Alıcı: ${JSON.stringify(chips.recipients || [])}
+Alıcı: ${recipientLabel}${genderNote}
 Bütçe: ${budgetText} (${budgetConstraint})
 Dil: ${language}
 
@@ -160,6 +202,12 @@ KATI KURALLAR:
 - Türkiye'de online satın alınabilen veya rezerve edilebilen SOMUT bir öğe olmalı.
 - search_query Google'da gerçek satış sayfasını bulduracak kadar spesifik olmalı (marka, model, sanatçı adı, kurs adı gibi).
 - Soyut fikirler ("birlikte vakit geçirme", "sürpriz parti", "el yazısı mektup") YASAK.
+
+REASONING ALANI:
+- Kullanıcıya 2. tekil şahıs hitap et ("senin ${recipientLabel}").
+- ASLA 1. tekil şahıs ("ben...") kullanma.
+- Konuşmadan EN AZ BİR somut referans içer (örn: "${recipientLabel} sabahları yoga yaptığını söylemiştin — bu mat ona günlük rutininde...").
+- "Bu güzel bir hediye" gibi içi boş cümle yazma; neden BU kişiye uyduğunu içeriden bilen biri gibi açıkla.
 
 YALNIZCA aşağıdaki JSON nesnesini döndür:
 {
@@ -220,8 +268,27 @@ serve(async (req) => {
       ? `\n\nDAHA ÖNCE GÖSTERİLEN HEDİYELER (KESİNLİKLE ÖNERME, BUNLARDAN TAMAMEN FARKLI 3 ALTERNATİF SUN):\n${excludeList.map((n) => `- ${n}`).join("\n")}\n- Aynı ürünün farklı modeli/rengi/varyantı da YASAK.\n- Mümkünse farklı kategoriden/temadan öneriler getir ki kullanıcı yeni seçenekler keşfetsin.`
       : "";
 
-    const giftPrompt = `Bu konuşmaya dayanarak tam olarak 3 hediye öner.
-Alıcı: ${JSON.stringify(chips.recipients || [])}
+    const { label: recipientLabel, genderNote } = resolveRecipient(chips, session.language);
+
+    const giftPrompt = `Sen, kullanıcının ${recipientLabel}${genderNote} iyi tanıyan, neyi sevip neyi sevmediğini içeriden bilen yakın bir dost rolündesin. Kullanıcı az önce seninle ${recipientLabel} hakkında bir sohbet yaptı — şimdi öğrendiklerini birleştirip ${recipientLabel} için tam olarak 3 GERÇEK hediye öner.
+
+ROL — KESİN UYULACAK
+- Kullanıcıyla 2. tekil şahıs konuş ("senin ${recipientLabel}").
+- ASLA 1. tekil şahıs ("ben...", "benim...") kullanma — sen alıcı değilsin, onu tanıyan birisin.
+- Önerilerin konuşmadan öğrendiğin SOMUT detaylara dayanmalı; havadan üretilmiş, jenerik öneri ASLA verme.
+
+REASONING ALANI — her hediye için kritik
+- 2. tekil şahıs, kullanıcıya hitap eder.
+- Konuşmadan EN AZ BİR somut referans içerir.
+   KÖTÜ: "Bu hediye onun için güzel olur."
+   İYİ: "${recipientLabel} sabahları yoga yaptığını söylemiştin — bu pamuklu mat günlük rutinine doğrudan girer, hem klasik tarzıyla minimal estetik tercihine de uygun."
+- Cümle, hediyenin neden BU kişiye uyduğunu içeriden bilen biri gibi açıklar; soyut güzelleme yapmaz.
+
+HEDİYE ÇEŞİTLİLİĞİ
+- 3 önerinin her biri GERÇEKTEN FARKLI bir yöne hitap etsin (farklı kategori veya farklı ihtiyaç) — kullanıcı çeşit görsün, aynı temanın 3 varyantı olmasın.
+- JENERİK KATEGORİ YASAK: "bir parfüm", "bir kitap", "çikolata kutusu" — mutlaka marka/model/spesifik ürün adı.
+
+Alıcı: ${recipientLabel}${genderNote}
 Bütçe: ${budgetText}
 Dil: ${session.language}
 
@@ -261,7 +328,7 @@ YALNIZCA aşağıdaki yapıda geçerli bir JSON nesnesi döndür (dizi "gifts" k
       "rank": 1,
       "product_name": "Arama için spesifik ürün adı",
       "search_query": "Google Shopping için optimize edilmiş Türkçe arama sorgusu",
-      "reasoning": "Bu hediyenin bu kişiye neden uygun olduğu — konuşmadan somut referanslarla",
+      "reasoning": "2. tekil şahıs, kullanıcıya hitap — konuşmadan en az bir somut referansla, ${recipientLabel} için neden uyduğunu içeriden bilen biri gibi açıkla",
       "description": "Kısa hediye açıklaması (1-2 cümle)"
     },
     {
