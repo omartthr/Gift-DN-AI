@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/store/i18nStore';
+import { getSupabaseClient } from '@/lib/supabase';
 
 const PLAN_PRICE_ID = 'price_1TWMAGI2xgJzmCxZxUTCwbtf';
 
@@ -13,9 +14,22 @@ export default function PricingPage() {
     try {
       setIsLoading(true);
 
+      // Oturum token'ını client-side'dan al
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        alert(lang === 'tr' ? 'Lütfen önce giriş yapın.' : 'Please sign in first.');
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ priceId: PLAN_PRICE_ID }),
       });
 

@@ -1,15 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/store/i18nStore";
 import { useQuizStore } from "@/store/quizStore";
+import { useWishlistStore } from "@/store/wishlistStore";
+import { useAuthStore } from "@/store/authStore";
+import { useCommunityStore } from "@/store/communityStore";
 import { GIFT_RESULTS, type GiftResult } from "@/lib/data";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import GradientText from "@/components/GradientText";
 import type { GiftSuggestion } from "@/types";
-
-type WishlistItem = { name: string; store: string; tone: string; price: string; desc: string; note: string; link: string; image: string };
 
 const TONES = ["sage", "rose", "clay", "sky", "cream", "coral"];
 
@@ -100,7 +101,16 @@ export default function ResultsClient() {
 
   const totalCount = gifts.length;
 
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const addWishlistItem = useWishlistStore(s => s.addItem);
+  const hasWishlistItem = useWishlistStore(s => s.hasItem);
+  const fetchWishlist = useWishlistStore(s => s.fetchItems);
+  const { user } = useAuthStore();
+
+  // Kullanıcı giriş yapmışsa wishlist'i DB'den çek
+  useEffect(() => {
+    if (user?.id) fetchWishlist(user.id);
+  }, [user?.id, fetchWishlist]);
+
   const [shareGift, setShareGift] = useState<DisplayGift | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const previousCountRef = useRef(gifts.length);
@@ -119,10 +129,27 @@ export default function ResultsClient() {
     }
   };
 
-  const addToWishlist = (g: DisplayGift) => {
-    if (!wishlist.some(w => w.name === g.name)) {
-      setWishlist(w => [...w, { name: g.name, store: g.store, tone: g.tone, price: g.price, desc: g.desc, note: "", link: g.link, image: g.image }]);
-      showToast(lang === "tr" ? "İstek listesine eklendi" : "Added to your wishlist");
+  const addToWishlist = async (g: DisplayGift) => {
+    if (!user) {
+      showToast(lang === "tr" ? "Lütfen önce giriş yapın" : "Please sign in first");
+      return;
+    }
+    const added = await addWishlistItem(user.id, {
+      product_name: g.name,
+      product_link: g.link,
+      product_image: g.image,
+      product_description: g.desc,
+      reasoning: g.why,
+      current_price: g.price,
+      source_store: g.store,
+      source_icon: g.sourceIcon || "",
+      rating: g.rating ?? null,
+      thumbnails: g.thumbnails,
+      tone: g.tone,
+      note: "",
+    });
+    if (added) {
+      showToast(lang === "tr" ? "İstek listesine eklendi ♡" : "Added to your wishlist ♡");
     }
   };
 
@@ -159,7 +186,7 @@ export default function ResultsClient() {
           )}
           <div className="col gap-24">
             {gifts.map((g, i) => {
-              const saved = wishlist.some(w => w.name === g.name);
+              const saved = hasWishlistItem(g.name);
               return (
                 <div key={i} className="fade-up" style={{ animationDelay: `${i * 0.12}s` }}>
                   <div className="row gap-32 wrap" style={{ alignItems: "stretch" }}>
@@ -281,7 +308,32 @@ export default function ResultsClient() {
 
       {/* Share Modal */}
       {shareGift && (
-        <ShareModal gift={shareGift} onClose={() => setShareGift(null)} onPost={() => { showToast(lang === "tr" ? "Toplulukla paylaşıldı" : "Shared with the community"); setShareGift(null); }} />
+        <ShareModal
+          gift={shareGift}
+          onClose={() => setShareGift(null)}
+          onPost={async (recipient, feedback, isAnon) => {
+            if (!user) {
+              showToast(lang === "tr" ? "Lütfen önce giriş yapın" : "Please sign in first");
+              return;
+            }
+            const created = await useCommunityStore.getState().createPost({
+              user_id: user.id,
+              session_id: session?.id || null,
+              product_name: shareGift.name,
+              product_image: shareGift.image,
+              product_link: shareGift.link,
+              feedback_text: feedback,
+              recipient_label: recipient,
+              is_anonymous: isAnon,
+            });
+            if (created) {
+              showToast(lang === "tr" ? "Toplulukla paylaşıldı ✓" : "Shared with the community ✓");
+            } else {
+              showToast(lang === "tr" ? "Paylaşılamadı, tekrar deneyin" : "Couldn't share, try again");
+            }
+            setShareGift(null);
+          }}
+        />
       )}
 
       {/* Toast */}
@@ -354,11 +406,18 @@ function StarRating({ value }: { value: number }) {
   );
 }
 
-function ShareModal({ gift, onClose, onPost }: { gift: DisplayGift; onClose: () => void; onPost: () => void }) {
+function ShareModal({ gift, onClose, onPost }: { gift: DisplayGift; onClose: () => void; onPost: (recipient: string, feedback: string, isAnon: boolean) => void }) {
   const { t, lang } = useI18n();
   const [recipient, setRecipient] = useState(lang === "tr" ? "Annem için" : "For my mom");
   const [feedback, setFeedback] = useState("");
   const [anon, setAnon] = useState(false);
+  const [posting, setPosting] = useState(false);
+
+  const handlePost = async () => {
+    setPosting(true);
+    await onPost(recipient, feedback, anon);
+    setPosting(false);
+  };
 
   return (
     <div className="fade-in" style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(27,22,17,0.4)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
@@ -369,6 +428,14 @@ function ShareModal({ gift, onClose, onPost }: { gift: DisplayGift; onClose: () 
         <div className="col gap-20">
           <div className="eyebrow">{t.share.title.toUpperCase()}</div>
           <h2 className="serif" style={{ fontSize: 34, lineHeight: 1.1, letterSpacing: "-0.01em" }}>{gift.name}</h2>
+          {gift.image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={gift.image}
+              alt={gift.name}
+              style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 6, background: "var(--bone)" }}
+            />
+          )}
           <p style={{ fontSize: 14, color: "var(--muted)" }}>{t.share.sub}</p>
           <div className="col gap-12">
             <div>
@@ -387,8 +454,13 @@ function ShareModal({ gift, onClose, onPost }: { gift: DisplayGift; onClose: () 
             </label>
           </div>
           <div className="row gap-8" style={{ marginTop: 8 }}>
-            <button className="btn btn-ghost" onClick={onClose}>{t.share.cancel}</button>
-            <button className="btn btn-coral" onClick={onPost}>↗ {t.share.post}</button>
+            <button className="btn btn-ghost" onClick={onClose} disabled={posting}>{t.share.cancel}</button>
+            <button className="btn btn-coral" onClick={handlePost} disabled={posting || !feedback.trim()}>
+              {posting
+                ? <span className="dots"><span /><span /><span /></span>
+                : <>↗ {t.share.post}</>
+              }
+            </button>
           </div>
         </div>
       </div>

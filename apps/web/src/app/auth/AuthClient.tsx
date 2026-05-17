@@ -16,13 +16,25 @@ export default function AuthClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async () => {
     if (!email || !password) return;
+    setError("");
     setLoading(true);
-    await signIn(email, password);
+    try {
+      await signIn(email, password);
+      // signIn başarılıysa user store'da set edilmiş olacak
+      const user = useAuthStore.getState().user;
+      if (user) {
+        router.push(nextPath);
+      } else {
+        setError(lang === "tr" ? "E-posta veya şifre hatalı." : "Invalid email or password.");
+      }
+    } catch {
+      setError(lang === "tr" ? "Bir hata oluştu, tekrar deneyin." : "Something went wrong, try again.");
+    }
     setLoading(false);
-    router.push(nextPath);  // ?next=/quiz varsa oraya dön
   };
 
   return (
@@ -37,9 +49,14 @@ export default function AuthClient() {
           <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>{t.auth.sub}</p>
 
           <div className="col gap-12" style={{ marginTop: 8 }}>
-            <input className="input" placeholder={t.auth.email} value={email} onChange={e => setEmail(e.target.value)} />
-            <input className="input" type="password" placeholder={t.auth.pass} value={password} onChange={e => setPassword(e.target.value)}
+            <input className="input" placeholder={t.auth.email} value={email} onChange={e => { setEmail(e.target.value); setError(""); }} />
+            <input className="input" type="password" placeholder={t.auth.pass} value={password} onChange={e => { setPassword(e.target.value); setError(""); }}
               onKeyDown={e => { if (e.key === "Enter") handleSubmit(); }} />
+
+            {error && (
+              <p style={{ fontSize: 13, color: "var(--coral)", margin: 0, padding: "4px 0" }}>{error}</p>
+            )}
+
             <button className="btn btn-coral btn-lg" onClick={handleSubmit} disabled={loading} style={{ marginTop: 8, width: "100%", justifyContent: "center" }}>
               {loading ? <span className="dots"><span></span><span></span><span></span></span> : t.auth.cont}
             </button>
@@ -66,3 +83,4 @@ export default function AuthClient() {
     </div>
   );
 }
+

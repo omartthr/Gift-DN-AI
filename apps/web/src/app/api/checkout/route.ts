@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createServerClient } from '@supabase/ssr';
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function POST(req: Request) {
   try {
@@ -11,12 +14,38 @@ export async function POST(req: Request) {
     }
 
     const { stripe } = await import('@/lib/stripe');
-    const { priceId } = await req.json();
 
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Body'yi clone'layıp oku (getUser'dan önce tüketilmemesi için)
+    const body = await req.json();
+    const { priceId } = body;
 
-    if (userError || !user) {
+    // Authorization header'dan token'ı al
+    const authHeader = req.headers.get('Authorization');
+    const accessToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : null;
+
+    let user: { id: string; email?: string } | null = null;
+
+    if (accessToken) {
+      // Client'tan gelen JWT ile kullanıcıyı doğrula
+      const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        cookies: { get: () => undefined, set: () => {}, remove: () => {} },
+        global: { headers: { Authorization: `Bearer ${accessToken}` } },
+      });
+      const { data, error } = await supabase.auth.getUser(accessToken);
+      if (!error && data.user) user = data.user;
+    }
+
+    // Fallback: cookie tabanlı oturumu kontrol et
+    if (!user) {
+      const { createServerSupabaseClient } = await import('@/lib/supabase-server');
+      const supabase = await createServerSupabaseClient();
+      const { data, error } = await supabase.auth.getUser();
+      if (!error && data.user) user = data.user;
+    }
+
+    if (!user) {
       return NextResponse.json(
         { message: 'Oturumunuz bulunamadı. Lütfen tekrar giriş yapın.' },
         { status: 401 }

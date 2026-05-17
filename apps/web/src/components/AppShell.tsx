@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useI18n } from "@/store/i18nStore";
 import { useAuthStore } from "@/store/authStore";
+import { useQuizStore } from "@/store/quizStore";
 import GradientText from "@/components/GradientText";
 
 function Icon({ name }: { name: string }) {
@@ -26,9 +27,19 @@ interface AppShellProps { children: React.ReactNode; }
 export default function AppShell({ children }: AppShellProps) {
   const { t, lang, setLang, initLang } = useI18n();
   const { user, signOut } = useAuthStore();
+  const resetQuiz = useQuizStore((s) => s.reset);
   const pathname = usePathname();
+  const router = useRouter();
   const [hover, setHover] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup" | false>(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = async () => {
+    setShowLogoutConfirm(false);
+    resetQuiz();
+    await signOut();
+    router.push("/");
+  };
 
   useEffect(() => {
     initLang();
@@ -78,7 +89,7 @@ export default function AppShell({ children }: AppShellProps) {
             <span className="lr-kbd">{lang.toUpperCase()}</span>
           </button>
           {user ? (
-            <button className="lr-item" onClick={signOut} title={t.nav.logout} style={{ border: 0 }}>
+            <button className="lr-item" onClick={() => setShowLogoutConfirm(true)} title={t.nav.logout} style={{ border: 0 }}>
               <span className="lr-icon" style={{ width: 22, height: 22, background: "var(--coral)", color: "var(--bone)", borderRadius: "50%", fontSize: 11, fontFamily: "JetBrains Mono", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {user.email?.[0]?.toUpperCase() || "U"}
               </span>
@@ -122,6 +133,53 @@ export default function AppShell({ children }: AppShellProps) {
 
       {/* Auth Modal */}
       {authMode && <AuthModalInline initialMode={authMode} onClose={() => setAuthMode(false)} />}
+
+      {/* Logout Confirm Modal */}
+      {showLogoutConfirm && (
+        <div
+          className="fade-in"
+          style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(27,22,17,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+          onClick={() => setShowLogoutConfirm(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="fade-up"
+            style={{ background: "var(--cream)", borderRadius: 8, padding: "40px 48px", maxWidth: 420, width: "100%", border: "1px solid var(--rule)", position: "relative" }}
+          >
+            <button
+              onClick={() => setShowLogoutConfirm(false)}
+              style={{ position: "absolute", top: 18, right: 22, background: "transparent", border: 0, fontSize: 18, cursor: "pointer", color: "var(--muted)" }}
+            >×</button>
+            <div className="col gap-20">
+              <div className="eyebrow">GIFT · DN-AI</div>
+              <h2 className="serif" style={{ fontSize: 32, lineHeight: 1.1, letterSpacing: "-0.02em" }}>
+                {lang === "tr" ? "Çıkış Yap" : "Sign Out"}
+              </h2>
+              <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.6 }}>
+                {lang === "tr"
+                  ? "Oturumunuzu kapatmak istediğinizden emin misiniz? Mevcut quiz oturumunuz sıfırlanacaktır."
+                  : "Are you sure you want to sign out? Your current quiz session will be reset."}
+              </p>
+              <div className="row gap-12" style={{ marginTop: 8 }}>
+                <button
+                  className="btn btn-bone btn-lg"
+                  onClick={() => setShowLogoutConfirm(false)}
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  {lang === "tr" ? "Vazgeç" : "Cancel"}
+                </button>
+                <button
+                  className="btn btn-coral btn-lg"
+                  onClick={handleLogout}
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  {lang === "tr" ? "Çıkış Yap" : "Sign Out"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
