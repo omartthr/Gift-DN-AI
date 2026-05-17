@@ -104,3 +104,41 @@ export const BUDGETS = {
   tr: { b1: "0 – 500 ₺", b2: "500 – 1.000 ₺", b3: "1.000 – 3.000 ₺", b4: "3.000 – 10.000 ₺", b5: "10.000 ₺ +" },
   en: { b1: "₺0 – 500", b2: "₺500 – 1,000", b3: "₺1,000 – 3,000", b4: "₺3,000 – 10,000", b5: "₺10,000 +" },
 };
+
+export type WheelGift = {
+  id: string;
+  name: string;
+  price: string;
+  store: string;
+  link: string;
+  image: string;
+  tone: string;
+};
+
+export const WHEEL_RECIPIENTS = {
+  tr: ["Kendin", "Yakın Arkadaş", "İş Arkadaşı", "Kardeş", "Sevgili", "Anne/Baba"],
+  en: ["Yourself", "Close Friend", "Coworker", "Sibling", "Partner", "Parents"],
+};
+
+export const WHEEL_GIFTS: Record<string, WheelGift[]> = {
+  tr: [
+    { id: "wg1", name: "Minimalist Kupa", price: "₺180", store: "Seramik Atölyesi", link: "https://example.com/mug", image: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=400", tone: "sage" },
+    { id: "wg2", name: "Doğal Taş Bileklik", price: "₺250", store: "Takı Evi", link: "https://example.com/bracelet", image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400", tone: "rose" },
+    { id: "wg3", name: "Sukulent Seti", price: "₺150", store: "Botanika", link: "https://example.com/succulent", image: "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=400", tone: "clay" },
+    { id: "wg4", name: "Kitap Ayracı", price: "₺50", store: "Kağıt İşleri", link: "https://example.com/bookmark", image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400", tone: "sky" },
+    { id: "wg5", name: "Aromaterapi Mum", price: "₺220", store: "Işık & Koku", link: "https://example.com/candle", image: "https://images.unsplash.com/photo-1603006905003-be475563bc59?w=400", tone: "cream" },
+    { id: "wg6", name: "Ufak Şans Kolyesi", price: "₺300", store: "Gümüşçü", link: "https://example.com/necklace", image: "https://images.unsplash.com/photo-1599643478524-fb66f7ca065b?w=400", tone: "coral" },
+    { id: "wg7", name: "Tasarım Çorap", price: "₺90", store: "Renkli Adımlar", link: "https://example.com/socks", image: "https://images.unsplash.com/photo-1582966772680-860e372bb558?w=400", tone: "sage" },
+    { id: "wg8", name: "Kahve Çekirdeği", price: "₺200", store: "Roasters", link: "https://example.com/coffee", image: "https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=400", tone: "clay" },
+  ],
+  en: [
+    { id: "wg1", name: "Minimalist Mug", price: "₺180", store: "Ceramics Studio", link: "https://example.com/mug", image: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=400", tone: "sage" },
+    { id: "wg2", name: "Natural Stone Bracelet", price: "₺250", store: "Jewelry House", link: "https://example.com/bracelet", image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400", tone: "rose" },
+    { id: "wg3", name: "Succulent Set", price: "₺150", store: "Botanica", link: "https://example.com/succulent", image: "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=400", tone: "clay" },
+    { id: "wg4", name: "Bookmark", price: "₺50", store: "Paperworks", link: "https://example.com/bookmark", image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400", tone: "sky" },
+    { id: "wg5", name: "Aromatherapy Candle", price: "₺220", store: "Light & Scent", link: "https://example.com/candle", image: "https://images.unsplash.com/photo-1603006905003-be475563bc59?w=400", tone: "cream" },
+    { id: "wg6", name: "Small Charm Necklace", price: "₺300", store: "Silversmith", link: "https://example.com/necklace", image: "https://images.unsplash.com/photo-1599643478524-fb66f7ca065b?w=400", tone: "coral" },
+    { id: "wg7", name: "Designer Socks", price: "₺90", store: "Colorful Steps", link: "https://example.com/socks", image: "https://images.unsplash.com/photo-1582966772680-860e372bb558?w=400", tone: "sage" },
+    { id: "wg8", name: "Coffee Beans", price: "₺200", store: "Roasters", link: "https://example.com/coffee", image: "https://images.unsplash.com/photo-1559525839-b184a4d698c7?w=400", tone: "clay" },
+  ]
+};

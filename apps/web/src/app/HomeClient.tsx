@@ -7,6 +7,8 @@ import { TONE_BG, COMMUNITY_FEED } from "@/lib/data";
 import Carousel from "@/components/Carousel";
 import TiltedCard from "@/components/TiltedCard";
 import GradientText from "@/components/GradientText";
+import GiftWheelModal from "@/components/GiftWheelModal";
+import { useState } from "react";
 
 function ImagePlaceholder({ tone = "sage", label, h = 240, style = {} }: { tone?: string; label?: string; h?: number; style?: React.CSSProperties }) {
   return (
@@ -20,6 +22,7 @@ export default function HomeClient() {
   const { t, lang } = useI18n();
   const { profile } = useAuthStore();
   const isPro = profile?.subscription_status === 'active';
+  const [showWheel, setShowWheel] = useState(false);
 
   const sampleGifts = [
     { tone: "sage", name: lang === "tr" ? "El Yapımı Çay Seti" : "Handmade Tea Set", price: "₺ 1.480", store: lang === "tr" ? "İlbey Atölye" : "İlbey Atelier" },
@@ -196,6 +199,38 @@ export default function HomeClient() {
         </section>
 
       </div>
+      
+      {/* FAB: Gift Wheel */}
+      <button 
+        className="fade-up"
+        onClick={() => setShowWheel(true)}
+        style={{
+          position: "fixed",
+          bottom: 32,
+          right: 32,
+          zIndex: 40,
+          background: "linear-gradient(135deg, var(--coral), #C44900)",
+          color: "white",
+          border: "none",
+          borderRadius: 999,
+          padding: "16px 24px",
+          boxShadow: "0 10px 30px rgba(217, 74, 41, 0.4)",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          fontSize: 16,
+          fontWeight: 600,
+          cursor: "pointer",
+          transition: "transform 0.2s"
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05) translateY(-2px)"}
+        onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1) translateY(0)"}
+      >
+        <span style={{ fontSize: 20 }}>🎰</span>
+        <span className="serif" style={{ letterSpacing: "-0.01em" }}>{lang === "tr" ? "Çarkı Çevir" : "Spin Wheel"}</span>
+      </button>
+
+      {showWheel && <GiftWheelModal onClose={() => setShowWheel(false)} />}
     </div>
   );
 }
