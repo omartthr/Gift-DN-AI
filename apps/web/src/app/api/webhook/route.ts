@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 export async function POST(req: Request) {
   const body = await req.text();
-  const signature = headers().get('Stripe-Signature') as string;
+  const signature = (await headers()).get("Stripe-Signature") as string;
 
   let event;
 
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     if (!webhookSecret) {
       throw new Error('STRIPE_WEBHOOK_SECRET is not set');
     }
-    
+
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: any) {
     console.error(`Webhook signature verification failed: ${err.message}`);
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
             current_period_end: currentPeriodEnd,
           })
           .eq('stripe_customer_id', customerId);
-          
+
         if (error) {
           console.error('Error updating user subscription from webhook:', error);
         }
