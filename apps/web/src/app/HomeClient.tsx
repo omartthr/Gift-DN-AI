@@ -200,34 +200,116 @@ export default function HomeClient() {
 
       </div>
       
-      {/* FAB: Gift Wheel */}
-      <button 
-        className="fade-up"
+      {/* FAB: Gift Wheel — Yuvarlak büyük buton */}
+      <style>{`
+        @keyframes fab-pulse {
+          0%   { transform: scale(1);   opacity: 0.55; }
+          70%  { transform: scale(1.55); opacity: 0; }
+          100% { transform: scale(1.55); opacity: 0; }
+        }
+        @keyframes fab-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        .wheel-fab-ring {
+          position: absolute; inset: 0;
+          border-radius: 50%;
+          border: 2px solid rgba(217,74,41,0.55);
+          animation: fab-pulse 2.2s ease-out infinite;
+          pointer-events: none;
+        }
+        .wheel-fab-ring:nth-child(2) { animation-delay: 0.75s; }
+        .wheel-fab-icon { transition: transform 0.5s ease; }
+        .wheel-fab:hover .wheel-fab-icon { animation: fab-spin 0.7s linear infinite; }
+        .wheel-fab { transition: transform 0.22s ease; }
+        .wheel-fab:hover  { transform: scale(1.07) translateY(-3px); background: transparent !important; }
+        .wheel-fab:focus  { outline: none; background: transparent !important; }
+        .wheel-fab:active { background: transparent !important; }
+        .wheel-fab, .wheel-fab:hover, .wheel-fab:focus, .wheel-fab:active { -webkit-tap-highlight-color: transparent; }
+      `}</style>
+
+      <button
+        className="wheel-fab fade-up"
         onClick={() => setShowWheel(true)}
         style={{
           position: "fixed",
-          bottom: 32,
-          right: 32,
+          bottom: 28,
+          right: 28,
           zIndex: 40,
-          background: "linear-gradient(135deg, var(--coral), #C44900)",
-          color: "white",
-          border: "none",
-          borderRadius: 999,
-          padding: "16px 24px",
-          boxShadow: "0 10px 30px rgba(217, 74, 41, 0.4)",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          gap: 12,
-          fontSize: 16,
-          fontWeight: 600,
+          gap: 8,
+          background: "none",
+          border: "none",
           cursor: "pointer",
-          transition: "transform 0.2s"
+          padding: 0,
         }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05) translateY(-2px)"}
-        onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1) translateY(0)"}
       >
-        <span style={{ fontSize: 20 }}>🎰</span>
-        <span className="serif" style={{ letterSpacing: "-0.01em" }}>{lang === "tr" ? "Çarkı Çevir" : "Spin Wheel"}</span>
+        {/* Daire + pulse halkalar */}
+        <div style={{ position: "relative", width: 72, height: 72 }}>
+          {/* Pulse halkaları */}
+          <div className="wheel-fab-ring" />
+          <div className="wheel-fab-ring" />
+
+          {/* Ana daire */}
+          <div style={{
+            width: 72, height: 72,
+            borderRadius: "50%",
+            background: "linear-gradient(145deg, #D94A29 0%, #C44900 60%, #8F2C0E 100%)",
+            boxShadow: "0 10px 32px rgba(217,74,41,0.45), inset 0 1px 0 rgba(255,255,255,0.18)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            position: "relative",
+            zIndex: 1,
+          }}>
+            {/* Çark SVG */}
+            <svg className="wheel-fab-icon" width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Outer ring */}
+              <circle cx="19" cy="19" r="17" stroke="rgba(255,255,255,0.9)" strokeWidth="2" fill="none"/>
+              {/* Spokes × 8 */}
+              {[0,45,90,135,180,225,270,315].map((angle, i) => {
+                const rad = (angle * Math.PI) / 180;
+                const x2 = 19 + Math.cos(rad) * 14;
+                const y2 = 19 + Math.sin(rad) * 14;
+                return <line key={i} x1="19" y1="19" x2={x2} y2={y2} stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round"/>;
+              })}
+              {/* Segment dots on rim */}
+              {[0,45,90,135,180,225,270,315].map((angle, i) => {
+                const rad = (angle * Math.PI) / 180;
+                const colors = ["#fff","rgba(255,220,180,0.9)","#fff","rgba(255,200,160,0.9)","#fff","rgba(255,220,180,0.9)","#fff","rgba(255,200,160,0.9)"];
+                return (
+                  <circle key={i}
+                    cx={19 + Math.cos(rad) * 14.5}
+                    cy={19 + Math.sin(rad) * 14.5}
+                    r="2.2"
+                    fill={colors[i]}
+                  />
+                );
+              })}
+              {/* Center hub */}
+              <circle cx="19" cy="19" r="3.5" fill="white" opacity="0.95"/>
+              <circle cx="19" cy="19" r="1.8" fill="#C44900"/>
+              {/* Top pointer */}
+              <polygon points="19,1 17.2,5.5 20.8,5.5" fill="white" opacity="0.95"/>
+            </svg>
+          </div>
+        </div>
+
+        {/* Etiket */}
+        <span style={{
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          color: "#C44900",
+          fontFamily: "inherit",
+          textTransform: "uppercase",
+          textShadow: "0 1px 4px rgba(255,255,255,0.8)",
+          userSelect: "none",
+        }}>
+          {lang === "tr" ? "Çarkı Çevir" : "Spin Wheel"}
+        </span>
       </button>
 
       {showWheel && <GiftWheelModal onClose={() => setShowWheel(false)} />}

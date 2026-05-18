@@ -143,17 +143,17 @@ serve(async (req) => {
     const recipientLabelCap = recipientLabel.charAt(0).toUpperCase() + recipientLabel.slice(1);
     const genderNote = GENDER_AMBIGUOUS.has(recipientKey) && sessionChips.recipientGender
       ? (sessionChips.recipientGender === "male"
-          ? (session.language === "en" ? " (male)" : " (erkek)")
-          : sessionChips.recipientGender === "female"
-            ? (session.language === "en" ? " (female)" : " (kadın)")
-            : "")
+        ? (session.language === "en" ? " (male)" : " (erkek)")
+        : sessionChips.recipientGender === "female"
+          ? (session.language === "en" ? " (female)" : " (kadın)")
+          : "")
       : "";
 
     // Konuşma geçmişini metin olarak formatla
     const historyText = history.length > 0
       ? history.map((m) =>
-          `${m.role === "user" ? "Kullanıcı" : "Asistan"}: ${m.content}`
-        ).join("\n")
+        `${m.role === "user" ? "Kullanıcı" : "Asistan"}: ${m.content}`
+      ).join("\n")
       : "(Henüz yanıt yok)";
 
     const MIN_TURNS = 4;

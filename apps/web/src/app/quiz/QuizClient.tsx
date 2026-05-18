@@ -478,7 +478,7 @@ function FinalizingScreen() {
         <div className="row gap-12 items-center">
           <span className="dots"><span /><span /><span /></span>
         </div>
-        
+
         {/* Dynamic Story */}
         <div className="serif fade-in" style={{ fontSize: 20, color: "var(--ink)", marginTop: 16, minHeight: 32 }}>
           {story}
@@ -670,7 +670,7 @@ function QuizScreen() {
 
   const isSubmitDisabled = submitting || (
     questionType === "multi_choice" ? (!multi.length && !answer.trim()) :
-    !answer.trim()
+      !answer.trim()
   );
 
   const progressPct = Math.min(((turn) / 10) * 100, 100);
@@ -867,7 +867,7 @@ function QuizScreen() {
         </div>
       </div>
       {/* Başa Dön Butonu */}
-      <button 
+      <button
         onClick={() => setShowRestartConfirm(true)}
         className="btn btn-bone btn-sm fade-in"
         style={{ position: "fixed", bottom: 24, right: 24, zIndex: 50, borderRadius: 999, padding: "8px 16px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", border: "1px solid var(--rule)" }}
