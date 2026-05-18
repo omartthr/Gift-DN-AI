@@ -39,7 +39,7 @@ export async function POST(req: Request) {
           // Retrieve subscription from Stripe to get price and current period end
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           const priceId = subscription.items.data[0].price.id;
-          const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+          const currentPeriodEnd = new Date((subscription as any).current_period_end * 1000).toISOString();
 
           // Update user in Supabase
           const { error } = await supabaseAdmin
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
         const subscription = event.data.object;
         const customerId = subscription.customer as string;
         const priceId = subscription.items.data[0].price.id;
-        const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        const currentPeriodEnd = new Date((subscription as any).current_period_end * 1000).toISOString();
 
         // Update user based on customerId
         const { error } = await supabaseAdmin
