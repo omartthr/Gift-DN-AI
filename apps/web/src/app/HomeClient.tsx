@@ -25,9 +25,9 @@ export default function HomeClient() {
   const [showWheel, setShowWheel] = useState(false);
 
   const sampleGifts = [
-    { tone: "sage", name: lang === "tr" ? "El Yapımı Çay Seti" : "Handmade Tea Set", price: "₺ 1.480", store: lang === "tr" ? "İlbey Atölye" : "İlbey Atelier" },
-    { tone: "rose", name: lang === "tr" ? "Yün Battaniye" : "Wool Blanket", price: "₺ 2.250", store: "Karya" },
-    { tone: "clay", name: lang === "tr" ? "Şiir Antolojisi" : "Poetry Anthology", price: "₺ 680", store: lang === "tr" ? "Hazan Sahaf" : "Hazan Books" },
+    { tone: "sage", name: lang === "tr" ? "El Yapımı Çay Seti" : "Handmade Tea Set", price: "₺ 1.480", store: lang === "tr" ? "İlbey Atölye" : "İlbey Atelier", image: "/images/cay_seti.jpg" },
+    { tone: "rose", name: lang === "tr" ? "Yün Battaniye" : "Wool Blanket", price: "₺ 2.250", store: "Karya", image: "/images/yun_battaniye.jpg" },
+    { tone: "clay", name: lang === "tr" ? "Şiir Antolojisi" : "Poetry Anthology", price: "₺ 680", store: lang === "tr" ? "Hazan Sahaf" : "Hazan Books", image: "/images/siir_antolojisi.jpg" },
   ];
 
   const featuredPosts = COMMUNITY_FEED.slice(0, 3);
@@ -36,7 +36,13 @@ export default function HomeClient() {
     id: i,
     render: () => (
       <>
-        <ImagePlaceholder tone={g.tone} label={g.name.toUpperCase()} h={170} />
+        {g.image ? (
+          <div style={{ height: 170, overflow: "hidden" }}>
+            <img src={g.image} alt={g.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
+        ) : (
+          <ImagePlaceholder tone={g.tone} label={g.name.toUpperCase()} h={170} />
+        )}
         <div className="col gap-4" style={{ padding: "14px 14px 16px" }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", textTransform: "uppercase" }}>{g.store} · 0{i + 1}/3</div>
           <div className="serif" style={{ fontSize: 18, lineHeight: 1.2 }}>{g.name}</div>
@@ -180,7 +186,13 @@ export default function HomeClient() {
                 {featuredPosts.map((c, i) => (
                   <TiltedCard key={i} scaleOnHover={1.02} rotateAmplitude={6}>
                     <div className="row gap-12 items-center" style={{ padding: "10px 12px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6, height: "100%" }}>
-                      <div style={{ width: 48, height: 48, flexShrink: 0, background: TONE_BG[c.tone], borderRadius: 4 }}></div>
+                      {c.image ? (
+                        <div style={{ width: 48, height: 48, flexShrink: 0, borderRadius: 4, overflow: "hidden" }}>
+                          <img src={c.image} alt={c.productName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                      ) : (
+                        <div style={{ width: 48, height: 48, flexShrink: 0, background: TONE_BG[c.tone], borderRadius: 4 }}></div>
+                      )}
                       <div className="col gap-2" style={{ flex: 1, minWidth: 0 }}>
                         <div className="row gap-8 items-baseline">
                           <span className="tag tag-rose" style={{ fontSize: 9, padding: "2px 7px" }}>{lang === "tr" ? c.forTr : c.forEn}</span>
