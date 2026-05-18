@@ -92,6 +92,7 @@ export const useQuizStore = create<QuizState>()(persist((set, get) => ({
           chips: {
             recipients: chips.recipients,
             budget: budgetLabel,
+            ...(chips.recipientGender ? { recipientGender: chips.recipientGender } : {}),
           },
           language,
         },

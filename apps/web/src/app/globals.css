@@ -1058,3 +1058,210 @@ h2.serif {
 .conf-pulse {
   animation: confPulse 1.4s ease-in-out infinite;
 }
+
+/* ============================================================
+   RESPONSIVE — mobil / tablet uyarlamaları
+   ============================================================ */
+
+/* Hamburger butonu — varsayılan: gizli (desktop) */
+.mobile-menu-btn {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 60;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  background: var(--bone);
+  color: var(--ink);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: background 0.15s ease;
+}
+
+.mobile-menu-btn:hover {
+  background: var(--cream-2);
+}
+
+.leftrail-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 9, 11, 0.45);
+  z-index: 39;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Tablet (≤1024px): chat panel daralt ────────────────────── */
+@media (max-width: 1024px) {
+  .layout-with-rail.with-chat {
+    margin-right: 340px;
+  }
+  .chat-panel {
+    width: 340px;
+  }
+}
+
+/* ── Mobil (≤880px): drawer + tek kolon ──────────────────────── */
+@media (max-width: 880px) {
+  /* Hamburger görünür ol */
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  /* Sol rail: ekrandan çık, sadece .open varsa kay */
+  .leftrail {
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(.2, .7, .2, 1);
+    box-shadow: none;
+  }
+  .leftrail.open {
+    transform: translateX(0);
+    box-shadow: 24px 0 60px -20px rgba(27, 22, 17, 0.25);
+  }
+  /* Mobilde hover-genişleme yok — drawer açıkken etiketler her zaman görünsün */
+  .leftrail .lr-brand-text,
+  .leftrail .lr-label,
+  .leftrail .lr-kbd {
+    opacity: 1;
+  }
+
+  .leftrail-backdrop {
+    display: block;
+  }
+
+  /* Ana içerik: sol margin sıfır, üstte hamburger için boşluk */
+  .layout-with-rail {
+    margin-left: 0;
+    padding-top: 56px;
+  }
+
+  /* Chat panel açıkken sağ margin'ı kaldır — chat üstte tam ekran kayacak */
+  .layout-with-rail.with-chat {
+    margin-right: 0;
+  }
+  .layout-with-rail.with-chat .shell {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  /* Chat panel: tam ekran drawer */
+  .chat-panel {
+    width: 100%;
+    max-width: 420px;
+    z-index: 45;
+  }
+
+  /* Shell padding */
+  .shell {
+    padding: 0 20px;
+  }
+
+  /* Topnav stack */
+  .topnav {
+    padding: 16px 0;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .navlinks {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* Sayfa-seviyesi büyük gap'li row'lar: kolona dön */
+  .row.wrap.gap-64,
+  .row.wrap.gap-48,
+  .row.wrap.gap-32 {
+    flex-direction: column;
+    gap: 32px;
+  }
+  .row.wrap.gap-64 > *,
+  .row.wrap.gap-48 > *,
+  .row.wrap.gap-32 > * {
+    flex: 1 1 100% !important;
+    width: 100%;
+    min-width: 0;
+    /* Sticky sticky sıfırla — mobilde sticky sidebar mantıklı değil */
+    position: static !important;
+    top: auto !important;
+  }
+
+  /* Footer dikey */
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    margin-top: 48px;
+    padding: 32px 0 48px;
+  }
+  .footer .col[style*="text-align"] {
+    text-align: left !important;
+  }
+
+  /* Modal padding küçült */
+  /* AuthModal & LogoutConfirm için */
+  div[class*="fade-up"][style*="padding: 48px 56px"],
+  div[class*="fade-up"][style*="padding: 40px 48px"] {
+    padding: 32px 24px !important;
+  }
+}
+
+/* ── Küçük telefon (≤480px): tipografi & spacing daha sıkı ── */
+@media (max-width: 480px) {
+  body {
+    font-size: 14.5px;
+  }
+
+  .shell {
+    padding: 0 16px;
+  }
+
+  .btn {
+    padding: 11px 18px;
+    font-size: 13.5px;
+  }
+  .btn-lg {
+    padding: 14px 22px;
+    font-size: 14px;
+  }
+
+  .chip {
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+
+  /* Hamburger için sayfa başına biraz nefes ver */
+  .topnav {
+    padding-top: 56px;
+  }
+
+  /* Mobilde tek satır brand uzun gelirse */
+  .brand .dnai {
+    font-size: 20px;
+  }
+
+  /* Yatay scrollbar gizle — iOS'ta görünür kalabiliyor */
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* ── Mobil drawer açıkken hamburger açık ikona dön (z-index üstte) ── */
+@media (max-width: 880px) {
+  .leftrail.open ~ .mobile-menu-btn,
+  .leftrail.open + .mobile-menu-btn {
+    /* not strictly needed — JS already swaps icon, but pin position */
+    background: var(--bone);
+  }
+  .mobile-menu-btn {
+    z-index: 50;
+  }
+  .leftrail {
+    z-index: 48;
+  }
+}

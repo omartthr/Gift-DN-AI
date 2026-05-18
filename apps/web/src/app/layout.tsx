@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AppShell from "@/components/AppShell";
 import AuthProvider from "@/components/AuthProvider";
@@ -6,6 +6,13 @@ import AuthProvider from "@/components/AuthProvider";
 export const metadata: Metadata = {
   title: "Gift DN-AI · AI Gift Editor",
   description: "Gift DN-AI — Yapay zeka destekli hediye öneri platformu. Doğru hediyeyi doğru kişiye bul.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

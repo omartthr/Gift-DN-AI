@@ -31,8 +31,21 @@ export default function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [hover, setHover] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup" | false>(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // Mobil drawer açıkken sayfa scroll'unu kilitle
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
+  // Sayfa değişince mobil drawer'ı kapat
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const handleLogout = async () => {
     setShowLogoutConfirm(false);
@@ -61,9 +74,38 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <>
+      {/* Mobile hamburger — sadece <=880px görünür */}
+      <button
+        type="button"
+        className="mobile-menu-btn"
+        aria-label="Menu"
+        aria-expanded={mobileOpen}
+        onClick={() => setMobileOpen(v => !v)}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          {mobileOpen ? (
+            <>
+              <path d="M6 6l12 12" />
+              <path d="M18 6L6 18" />
+            </>
+          ) : (
+            <>
+              <path d="M3 7h18" />
+              <path d="M3 12h18" />
+              <path d="M3 17h18" />
+            </>
+          )}
+        </svg>
+      </button>
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div className="leftrail-backdrop" onClick={() => setMobileOpen(false)} />
+      )}
+
       {/* Left Rail */}
       <div
-        className={"leftrail" + (hover ? " expanded" : "")}
+        className={"leftrail" + (hover ? " expanded" : "") + (mobileOpen ? " open" : "")}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
       >

@@ -141,13 +141,34 @@ serve(async (req) => {
     const labels = session.language === "en" ? RECIPIENT_LABELS_EN : RECIPIENT_LABELS_TR;
     const recipientLabel = labels[recipientKey] || labels.other;
     const recipientLabelCap = recipientLabel.charAt(0).toUpperCase() + recipientLabel.slice(1);
-    const genderNote = GENDER_AMBIGUOUS.has(recipientKey) && sessionChips.recipientGender
-      ? (sessionChips.recipientGender === "male"
-        ? (session.language === "en" ? " (male)" : " (erkek)")
-        : sessionChips.recipientGender === "female"
-          ? (session.language === "en" ? " (female)" : " (kadın)")
-          : "")
-      : "";
+    const genderResolved: "male" | "female" | null =
+      !GENDER_AMBIGUOUS.has(recipientKey)
+        ? (recipientKey === "mom" ? "female" : recipientKey === "dad" ? "male" : null)
+        : sessionChips.recipientGender === "male"
+          ? "male"
+          : sessionChips.recipientGender === "female"
+            ? "female"
+            : null;
+
+    const genderNote = genderResolved
+      ? (session.language === "en"
+          ? (genderResolved === "male" ? " (male)" : " (female)")
+          : (genderResolved === "male" ? " (erkek)" : " (kadın)"))
+      : (GENDER_AMBIGUOUS.has(recipientKey)
+          ? (session.language === "en" ? " (gender not specified)" : " (cinsiyet belirtilmedi)")
+          : "");
+
+    // Cinsiyet kuralı — prompt'a açıkça enjekte edilecek satır.
+    // Biliniyorsa: AI'a "bu kişi X, asla cinsiyet sorma" der.
+    // Belirtilmediyse: kullanıcı bilinçli olarak söylemedi, sormak yerine
+    // hediye seçimini cinsiyet-nötr tut.
+    const genderRule = genderResolved
+      ? (session.language === "en"
+          ? `GENDER — ALREADY KNOWN: ${recipientLabelCap} is ${genderResolved === "male" ? "MALE" : "FEMALE"}. This is a FIXED FACT given by the user. NEVER ask about gender, biological sex, "boy or girl", "he or she", or anything that implies you don't know. NEVER suggest gift categories that contradict this gender. Use correct pronouns naturally.`
+          : `CİNSİYET — ZATEN BİLİNİYOR: ${recipientLabelCap} ${genderResolved === "male" ? "ERKEK" : "KADIN"}. Bu bilgi kullanıcı tarafından KESİN olarak verildi. ASLA cinsiyet sorma, "kız mı erkek mi", "kadın mı adam mı", "o kim" gibi sorular SORMA — bildiğini varsay. Hediye önerilerini bu cinsiyete uygun tut, çelişen kategoriler önerme.`)
+      : (session.language === "en"
+          ? `GENDER — INTENTIONALLY UNSPECIFIED: The user did NOT provide a gender for ${recipientLabel}, and this is intentional. Do NOT ask for it. Keep your questions and gift directions gender-neutral.`
+          : `CİNSİYET — KASTEN BELİRTİLMEDİ: Kullanıcı ${recipientLabel} için cinsiyet vermedi, bu bilinçli bir tercih. Cinsiyet SORMA. Sorularını ve hediye yönlendirmeni cinsiyet-nötr tut.`);
 
     // Konuşma geçmişini metin olarak formatla
     const historyText = history.length > 0
@@ -160,6 +181,8 @@ serve(async (req) => {
     const MAX_TURNS = 10;
 
     const prompt = `Sen, kullanıcının ${recipientLabel}${genderNote} iyi tanıyan, neyi sevip neyi sevmediğini içeriden bilen yakın bir dost gibi davranan bir hediye asistanısın. Görevin: kullanıcıyla doğal bir sohbet kurarak ${recipientLabel} için en uygun hediyeyi bulmak.
+
+${genderRule}
 
 ROL — KESİN UYULACAK
 - Kullanıcıyla DAİMA 2. tekil şahıs konuş: "sen", "senin ${recipientLabel}".
@@ -213,7 +236,7 @@ Sorular YALNIZCA şunlar hakkında:
 - İlişki tonu (samimi/resmi, sürpriz mi/açık konuşulmuş mu)
 - Estetik tercih (minimal/renkli/klasik)
 
-YASAK: Sağlık durumu, mali durum, dini görüş, siyasi görüş, mahrem ilişki sorunları, kilo/fiziksel özellik — bu konulara ASLA değinme.
+YASAK: Sağlık durumu, mali durum, dini görüş, siyasi görüş, mahrem ilişki sorunları, kilo/fiziksel özellik, CİNSİYET ("kız mı erkek mi", "kadın mı adam mı" vb. — yukarıdaki CİNSİYET kuralına bak) — bu konulara ASLA değinme.
 
 BİTİRME KURALI (quiz illa 10 tura kadar gitmek ZORUNDA DEĞİL)
 Şu koşullardan biri gerçekleşirse question alanını null yap (oturum biter):
