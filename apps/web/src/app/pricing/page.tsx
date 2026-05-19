@@ -241,6 +241,26 @@ export default function PricingPage() {
           <span className="mono" style={{ fontSize: 10, letterSpacing: "0.05em" }}>{lang === 'tr' ? 'ANINDA AKTİVASYON' : 'INSTANT ACTIVATION'}</span>
         </div>
       </div>
+
+      {/* Test Warning Note */}
+      <div style={{ marginTop: 48, padding: 24, background: "rgba(249, 87, 56, 0.05)", border: "1px dashed var(--coral)", borderRadius: 12, textAlign: "center", maxWidth: 860, margin: "48px auto 0 auto" }}>
+        <p style={{ color: "var(--coral)", fontWeight: 500, marginBottom: 8 }}>
+          {lang === 'tr' ? '' : ''}
+        </p>
+        <p style={{ fontSize: 14, color: "var(--ink-2)", lineHeight: 1.5 }}>
+          {lang === 'tr' ? (
+            <>
+              Kart numarası olarak: <strong>4242 4242 4242 4242</strong><br />
+              Tarih olarak gelecekteki herhangi bir tarih ve CVV için herhangi üç basamaklı bir sayıyı kullanabilirsiniz.
+            </>
+          ) : (
+            <>
+              Card number: <strong>4242 4242 4242 4242</strong><br />
+              You can use any future date for expiry and any 3-digit number for CVV.
+            </>
+          )}
+        </p>
+      </div>
     </div>
   );
 }
