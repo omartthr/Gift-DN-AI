@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
+import type { Transition } from 'motion/react';
 import './Carousel.css';
 
 const DRAG_BUFFER = 0;
 const VELOCITY_THRESHOLD = 500;
 const GAP = 16;
-const SPRING_OPTIONS = { type: 'spring', stiffness: 300, damping: 30 };
+const SPRING_OPTIONS: Transition = { type: 'spring', stiffness: 300, damping: 30 };
 
 function CarouselItem({ item, index, itemWidth, round, trackItemOffset, x, transition }: any) {
   const range = [-(index + 1) * trackItemOffset, -index * trackItemOffset, -(index - 1) * trackItemOffset];
