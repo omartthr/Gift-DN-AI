@@ -2,7 +2,7 @@
   "name": "gift-dnai",
   "private": true,
   "workspaces": [
-    "apps/*",
+    "apps/web",
     "packages/*"
   ],
   "scripts": {
