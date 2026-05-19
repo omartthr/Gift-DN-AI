@@ -136,14 +136,7 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         .eq("user_id", userId)
         .eq("post_id", postId);
 
-      if (!error) {
-        // likes_count'u düşür
-        const current = dbPosts.find(p => p.id === postId)?.likes_count ?? 1;
-        await supabase
-          .from("community_posts")
-          .update({ likes_count: Math.max(0, current - 1) })
-          .eq("id", postId);
-      } else {
+      if (error) {
         // Rollback
         set({ userLikes, dbPosts });
       }
@@ -152,14 +145,8 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         .from("post_likes")
         .insert({ user_id: userId, post_id: postId });
 
-      if (!error) {
-        // likes_count'u artır
-        const current = dbPosts.find(p => p.id === postId)?.likes_count ?? 0;
-        await supabase
-          .from("community_posts")
-          .update({ likes_count: current + 1 })
-          .eq("id", postId);
-      } else {
+      if (error) {
+        // Rollback
         set({ userLikes, dbPosts });
       }
     }
