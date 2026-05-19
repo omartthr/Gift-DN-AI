@@ -177,10 +177,6 @@ export default function AppShell({ children }: AppShellProps) {
               <div className="eyebrow">GIFT DN-AI · {lang === "tr" ? "BİR YAPAY ZEKA HEDİYE EDİTÖRÜ" : "AN AI GIFT EDITOR"}</div>
               <div className="serif" style={{ fontSize: 18, color: "var(--ink)" }}>{lang === "tr" ? "Hediye arama. Hikayesini anlat, biz bulalım." : "Don't search for a gift. Tell the story, we'll find it."}</div>
             </div>
-            <div className="col gap-4 mono" style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", textAlign: "right" }}>
-              <span>v0.4 · prototype</span>
-              <span>Istanbul · 2026</span>
-            </div>
           </div>
         </div>
       </div>

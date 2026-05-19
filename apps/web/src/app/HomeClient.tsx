@@ -25,9 +25,9 @@ export default function HomeClient() {
   const [showWheel, setShowWheel] = useState(false);
 
   const sampleGifts = [
-    { tone: "sage", name: lang === "tr" ? "El Yapımı Çay Seti" : "Handmade Tea Set", price: "₺ 1.480", store: lang === "tr" ? "İlbey Atölye" : "İlbey Atelier", image: "/images/cay_seti.jpg" },
-    { tone: "rose", name: lang === "tr" ? "Yün Battaniye" : "Wool Blanket", price: "₺ 2.250", store: "Karya", image: "/images/yun_battaniye.jpg" },
-    { tone: "clay", name: lang === "tr" ? "Şiir Antolojisi" : "Poetry Anthology", price: "₺ 680", store: lang === "tr" ? "Hazan Sahaf" : "Hazan Books", image: "/images/siir_antolojisi.jpg" },
+    { tone: "sage", name: lang === "tr" ? "El Yapımı Çay Seti" : "Handmade Tea Set", price: "₺ 1.480", store: lang === "tr" ? "İlbey Atölye" : "İlbey Atelier" },
+    { tone: "rose", name: lang === "tr" ? "Yün Battaniye" : "Wool Blanket", price: "₺ 2.250", store: "Karya" },
+    { tone: "clay", name: lang === "tr" ? "Şiir Antolojisi" : "Poetry Anthology", price: "₺ 680", store: lang === "tr" ? "Hazan Sahaf" : "Hazan Books" },
   ];
 
   const featuredPosts = COMMUNITY_FEED.slice(0, 3);
@@ -36,13 +36,7 @@ export default function HomeClient() {
     id: i,
     render: () => (
       <>
-        {g.image ? (
-          <div style={{ height: 170, overflow: "hidden" }}>
-            <img src={g.image} alt={g.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          </div>
-        ) : (
-          <ImagePlaceholder tone={g.tone} label={g.name.toUpperCase()} h={170} />
-        )}
+        <ImagePlaceholder tone={g.tone} label={g.name.toUpperCase()} h={170} />
         <div className="col gap-4" style={{ padding: "14px 14px 16px" }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--muted)", textTransform: "uppercase" }}>{g.store} · 0{i + 1}/3</div>
           <div className="serif" style={{ fontSize: 18, lineHeight: 1.2 }}>{g.name}</div>
@@ -60,8 +54,6 @@ export default function HomeClient() {
         <section style={{ paddingBottom: 64 }}>
           <div className="row gap-12 items-center" style={{ marginBottom: 24 }}>
             <span className="eyebrow">{t.landing.eyebrow}</span>
-            <span style={{ width: 24, height: 1, background: "var(--rule)" }}></span>
-            <span className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "var(--muted)" }}>v0.4 · PROTOTYPE</span>
           </div>
 
           <h1 className="serif" style={{ fontSize: "clamp(48px, 6.2vw, 92px)", lineHeight: 1.04, letterSpacing: "-0.02em", maxWidth: 820 }}>
@@ -150,8 +142,8 @@ export default function HomeClient() {
                 </div>
                 <div className="col gap-24" style={{ flex: "1 1 320px" }}>
                   <p style={{ fontSize: 16, color: "var(--ink-2)", lineHeight: 1.6, maxWidth: 440 }}>
-                    {lang === "tr" 
-                      ? "Ücretsiz planda hediye arama hakkınız sınırlıdır. Premium ile sevdikleriniz için sınırsız öneri alabilir, kişilik analizleri ve hatırlatıcılar ile hiçbir özel günü şansa bırakmazsınız." 
+                    {lang === "tr"
+                      ? "Ücretsiz planda hediye arama hakkınız sınırlıdır. Premium ile sevdikleriniz için sınırsız öneri alabilir, kişilik analizleri ve hatırlatıcılar ile hiçbir özel günü şansa bırakmazsınız."
                       : "Free searches are limited. With Premium, get unlimited suggestions, personality insights, and reminders so you never leave a special occasion to chance."}
                   </p>
                   <div>
@@ -186,13 +178,7 @@ export default function HomeClient() {
                 {featuredPosts.map((c, i) => (
                   <TiltedCard key={i} scaleOnHover={1.02} rotateAmplitude={6}>
                     <div className="row gap-12 items-center" style={{ padding: "10px 12px", background: "var(--bone)", border: "1px solid var(--rule)", borderRadius: 6, height: "100%" }}>
-                      {c.image ? (
-                        <div style={{ width: 48, height: 48, flexShrink: 0, borderRadius: 4, overflow: "hidden" }}>
-                          <img src={c.image} alt={c.productName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        </div>
-                      ) : (
-                        <div style={{ width: 48, height: 48, flexShrink: 0, background: TONE_BG[c.tone], borderRadius: 4 }}></div>
-                      )}
+                      <div style={{ width: 48, height: 48, flexShrink: 0, background: TONE_BG[c.tone], borderRadius: 4 }}></div>
                       <div className="col gap-2" style={{ flex: 1, minWidth: 0 }}>
                         <div className="row gap-8 items-baseline">
                           <span className="tag tag-rose" style={{ fontSize: 9, padding: "2px 7px" }}>{lang === "tr" ? c.forTr : c.forEn}</span>
@@ -211,7 +197,7 @@ export default function HomeClient() {
         </section>
 
       </div>
-      
+
       {/* FAB: Gift Wheel — Yuvarlak büyük buton */}
       <style>{`
         @keyframes fab-pulse {
@@ -279,18 +265,18 @@ export default function HomeClient() {
             {/* Çark SVG */}
             <svg className="wheel-fab-icon" width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
               {/* Outer ring */}
-              <circle cx="19" cy="19" r="17" stroke="rgba(255,255,255,0.9)" strokeWidth="2" fill="none"/>
+              <circle cx="19" cy="19" r="17" stroke="rgba(255,255,255,0.9)" strokeWidth="2" fill="none" />
               {/* Spokes × 8 */}
-              {[0,45,90,135,180,225,270,315].map((angle, i) => {
+              {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => {
                 const rad = (angle * Math.PI) / 180;
                 const x2 = 19 + Math.cos(rad) * 14;
                 const y2 = 19 + Math.sin(rad) * 14;
-                return <line key={i} x1="19" y1="19" x2={x2} y2={y2} stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round"/>;
+                return <line key={i} x1="19" y1="19" x2={x2} y2={y2} stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" />;
               })}
               {/* Segment dots on rim */}
-              {[0,45,90,135,180,225,270,315].map((angle, i) => {
+              {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => {
                 const rad = (angle * Math.PI) / 180;
-                const colors = ["#fff","rgba(255,220,180,0.9)","#fff","rgba(255,200,160,0.9)","#fff","rgba(255,220,180,0.9)","#fff","rgba(255,200,160,0.9)"];
+                const colors = ["#fff", "rgba(255,220,180,0.9)", "#fff", "rgba(255,200,160,0.9)", "#fff", "rgba(255,220,180,0.9)", "#fff", "rgba(255,200,160,0.9)"];
                 return (
                   <circle key={i}
                     cx={19 + Math.cos(rad) * 14.5}
@@ -301,10 +287,10 @@ export default function HomeClient() {
                 );
               })}
               {/* Center hub */}
-              <circle cx="19" cy="19" r="3.5" fill="white" opacity="0.95"/>
-              <circle cx="19" cy="19" r="1.8" fill="#C44900"/>
+              <circle cx="19" cy="19" r="3.5" fill="white" opacity="0.95" />
+              <circle cx="19" cy="19" r="1.8" fill="#C44900" />
               {/* Top pointer */}
-              <polygon points="19,1 17.2,5.5 20.8,5.5" fill="white" opacity="0.95"/>
+              <polygon points="19,1 17.2,5.5 20.8,5.5" fill="white" opacity="0.95" />
             </svg>
           </div>
         </div>
